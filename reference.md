@@ -2,7 +2,7 @@
 
 ## Contents
   
-### [bitmap](#bitmap)
+### bitmap
 
 [blit](#blit-dst-x-y-src-)  
 [create](#create-width-height--init_color-)  
@@ -15,7 +15,7 @@
 [bitmap.save](#bitmapsave-file-format--palette-)  
 [bitmap.width](#bitmapwidth)  
   
-### [color](#color)
+### color
 
 [add](#add-left-right-)  
 [blue](#blue-color-)  
@@ -35,7 +35,7 @@
 [to_rgba](#to_rgba-color-)  
 [quantize](#quantize-colors-n_colors-)
   
-### [palettes](#palettes)
+### palettes
 
 [palette_2](#palette_2)  
 [palette_16](#palette_16)  
@@ -233,7 +233,7 @@ Quantizes the colors in the table `colors` to a total of `n_colors` using the me
 A table with a maximum of `n_colors` quantized is returned.
 Less colors are returned when the image doesn't contain `n_colors`.
 
-## Palettes
+## palettes
 
 ### `palette_2`
 
