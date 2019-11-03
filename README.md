@@ -28,23 +28,23 @@ The following example loads an image and convert it to a 256 color 8 bit indexed
 local bitmap = require( "bitmap" )
 local color  = require( "color" )
 
-local bmp     = bitmap.open( "lena.bmp" )
+local bmp     = bitmap.open( "kodim23.bmp" )
 local palette = color.quantize( bmp.pixels(), 256 )
 
-bmp:save( "lena_8bit.bmp", "RGB8", palette )
+bmp:save( "kodim23_8bit.bmp", "RGB8", palette )
 ```
 
 The next example loads an image, creates a viewport at the lower left part of the bitmap.
-Then the content of the viewport is saved to a bitmap file with the same format and pallet (in case `lena.bmp` was an indexed bitmap).
+Then the content of the viewport is saved to a bitmap file with the same format and pallet (in case `kodim23.bmp` was an indexed bitmap).
 
 ``` lua
 local bitmap = require( "bitmap" )
 local color  = require( "color" )
 
-local bmp, format, palette = bitmap.open( "lena.bmp" )
+local bmp, format, palette = bitmap.open( "kodim23.bmp" )
 local viewport             = bitmap.make_viewport( bmp, 0, 0, 42, 42 )
 
-viewport:save( "lena_vp.bmp", format, palette )
+viewport:save( "kodim23_vp.bmp", format, palette )
 ```
 
 You can find these and other examples in the [tests](/test).
