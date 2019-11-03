@@ -1,5 +1,46 @@
 # Bitmap Manipulation Primitives for Lua - Reference
 
+## Contents
+  
+### [bitmap](#bitmap)
+
+[blit](#blit-dst-x-y-src-)  
+[create](#create-width-height--init_color-)  
+[diff](#diff-left-right-)  
+[make_viewport](#make_viewport-src_bmp-x-y-width-height-)  
+[open](#open-file-)  
+[psnr](#psnr-reference-other-)  
+[bitmap.height](#bitmapheight)  
+[bitmap.pixels](#bitmappixels)  
+[bitmap.save](#bitmapsave-file-format--palette-)  
+[bitmap.width](#bitmapwidth)  
+  
+### [color](#color)
+
+[add](#add-left-right-)  
+[blue](#blue-color-)  
+[delta_e94](#delta_e94-l1-a1-b1-l2-a2-b2-)  
+[green](#green-color-)  
+[from_hcl](#from_hcl-h-c-l-)  
+[from_hsl](#from_hsl-h-s-l-)  
+[from_hsv](#from_hsv-h-s-v--a-)  
+[from_Lab](#from_lab-l-a-b-)  
+[from_rgba](#from_rgba-r-g-b--a-)  
+[red](#red-color-)  
+[sub](#sub-left-right-)  
+[to_hcl](#to_hcl-color-)  
+[to_hsl](#to_hsl-color-)  
+[to_hsv](#to_hsv-color-)  
+[to_Lab](#to_lab-color-)  
+[to_rgba](#to_rgba-color-)  
+[quantize](#quantize-colors-n_colors-)
+  
+### [palettes](#palettes)
+
+[palette_2](#palette_2)  
+[palette_16](#palette_16)  
+[palette_256](#palette_256)
+
 ## bitmap
 
 A bitmap follows the same structure as a bitmap file which is a two dimentional table with rows of pixels.
@@ -156,6 +197,10 @@ Returns a color that is comverted from the CIE Lab color model values.
 Returns a color that is comverted from the RGB color component values.
 When the optional alpha is not provided the default value of 255 will be used.
 
+### `red( color )`
+
+Returns the red component value from a color.
+
 ### `sub( left, right )`
 
 Substract two color.
@@ -177,10 +222,6 @@ The fourth returned value is the alpha ranging from 0.0 up to 1.0.
 ### `to_Lab( color )`
 
 Returns the representation of `color` in CIE Lab color model values.
-
-### `red( color )`
-
-Returns the red component value from a color.
 
 ### `to_rgba( color )`
 
