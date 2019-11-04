@@ -26,14 +26,14 @@
 [from_hsv](#from_hsv-h-s-v--a-)  
 [from_Lab](#from_lab-l-a-b-)  
 [from_rgba](#from_rgba-r-g-b--a-)  
+[quantize](#quantize-colors-n_colors-)  
 [red](#red-color-)  
 [sub](#sub-left-right-)  
 [to_hcl](#to_hcl-color-)  
 [to_hsl](#to_hsl-color-)  
 [to_hsv](#to_hsv-color-)  
 [to_Lab](#to_lab-color-)  
-[to_rgba](#to_rgba-color-)  
-[quantize](#quantize-colors-n_colors-)
+[to_rgba](#to_rgba-color-)
   
 ### palettes
 
@@ -197,6 +197,12 @@ Returns a color that is converted from the CIE Lab color model values.
 Returns a color that is converted from the RGB color component values.
 When the optional alpha is not provided the default value of 255 will be used.
 
+### `quantize( colors, n_colors )`
+
+Quantizes the colors in the table `colors` to a total of `n_colors` using the median cut algorithm.
+A table with a maximum of `n_colors` quantized is returned.
+Less colors are returned when the image doesn't contain `n_colors`.
+
 ### `red( color )`
 
 Returns the red component value from a color.
@@ -226,12 +232,6 @@ Returns the representation of `color` in CIE Lab color model values.
 ### `to_rgba( color )`
 
 Returns the red, green, blue and alpha color components of `color`.
-
-### `quantize( colors, n_colors )`
-
-Quantizes the colors in the table `colors` to a total of `n_colors` using the median cut algorithm.
-A table with a maximum of `n_colors` quantized is returned.
-Less colors are returned when the image doesn't contain `n_colors`.
 
 ## palettes
 
