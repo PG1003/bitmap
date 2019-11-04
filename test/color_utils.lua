@@ -34,7 +34,7 @@ local _rgb_hsl =
     [ 0xFFFFFFFF ] = { 0.00000,   0.00000, 1.00000 }
 }
 
-function test.color_to_hsl()
+function tests.color_to_hsl()
     _from_color( color.to_hsl, _rgb_hsl )
 end
 
@@ -54,7 +54,7 @@ local _rgb_hsv =
     [ 0xFFFFFFFF ] = { 0.00000,   0.00000, 1.00000 }
 }
 
-function test.color_to_hsv()
+function tests.color_to_hsv()
     _from_color( color.to_hsv, _rgb_hsv )
 end
 
@@ -64,17 +64,17 @@ end
 
 local _rgb_Lab =
 {
-    [ 0xFFFF0000 ] = {  53.241,  80.092,   67.203 },
-    [ 0xFF00FF00 ] = {  87.735, -86.183,   83.179 },
-    [ 0xFF0000FF ] = {  32.297,  79.188, -107.860 },
-    [ 0xFF00FFFF ] = {  91.113, -48.088,  -14.131 },
-    [ 0xFFFF00FF ] = {  60.324,  98.234,  -60.825 },
-    [ 0xFFFFFF00 ] = {  97.139, -21.554,   94.478 },
-    [ 0xFF000000 ] = {   0.000,   0.000,    0.000 },
-    [ 0xFFFFFFFF ] = { 100.000,   0.000,    0.000 }
+    [ 0xFFFF0000 ] = {  53.232881785842,  80.109309529822,   67.220068310264 },
+    [ 0xFF00FF00 ] = {  87.737033473544, -86.184636497625,   83.181164747779 },
+    [ 0xFF0000FF ] = {  32.302586667249,  79.196661789309, -107.863681044950 },
+    [ 0xFF00FFFF ] = {  91.116521109463, -48.079618466229,  -14.138127754846 },
+    [ 0xFFFF00FF ] = {  60.319933664076,  98.254218686161,  -60.842984223862 },
+    [ 0xFFFFFF00 ] = {  97.138246981297, -21.555908334832,   94.482485446445 },
+    [ 0xFF000000 ] = {   0.000000000000,   0.000000000000,    0.000000000000 },
+    [ 0xFFFFFFFF ] = { 100.000000000000,   0.005260000000,   -0.010408000000 }  -- There are some minor rouding errors
 }
 
-function test.color_to_Lab()
+function tests.color_to_Lab()
     _from_color( color.to_Lab, _rgb_Lab )
 end
 
