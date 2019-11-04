@@ -1,4 +1,4 @@
--- Make sure we have acces to the src and test directories from our working directory.
+-- Make sure we have access to the 'src' and 'test' directories from our working directory.
 local short_src = debug.getinfo( 1 ).short_src
 local src_path  = string.gsub( short_src, "main.lua$", "../src/?.lua" )
 local test_path = string.gsub( short_src, "main.lua$", "../test/?.lua" )

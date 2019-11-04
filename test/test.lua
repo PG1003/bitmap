@@ -19,6 +19,8 @@
 -- SOFTWARE.
 
 
+local test = {}
+
 local math_abs = math.abs
 
 local _total_checks  = 0
@@ -26,13 +28,13 @@ local _failed_checks = 0
 
 local function _report_fail( ... )
     _failed_checks = _failed_checks + 1
-    local msg   = string.format( ... )
-    local stack = debug.traceback( msg, 3 )
+    local msg         = string.format( ... )
+    local stack       = debug.traceback( msg, 3 )
     local start, stop = string.find( stack, "[%s%c]+%C+run_test_modules" )
     print( string.sub( stack, 1, start - 1 ) )
 end
 
-local function _is_not_nil( value )
+function test.is_not_nil( value )
     _total_checks = _total_checks + 1
     if value == nil then
         _report_fail( "Is nil" )
@@ -41,7 +43,7 @@ local function _is_not_nil( value )
     return true
 end
 
-local function _is_nil( value )
+function test.is_nil( value )
     _total_checks = _total_checks + 1
     if value ~= nil then
         _report_fail( "Is nil" )
@@ -50,7 +52,7 @@ local function _is_nil( value )
     return true
 end
 
-local function _is_same( value_1, value_2 )
+function test.is_same( value_1, value_2 )
     _total_checks = _total_checks + 1
     if value_1 ~= value_2 then
         _report_fail( "Not same; value 1: '%s', value 2: '%s'",
@@ -60,7 +62,7 @@ local function _is_same( value_1, value_2 )
     return true
 end
 
-local function _is_not_same( value_1, value_2 )
+function test.is_not_same( value_1, value_2 )
     _total_checks = _total_checks + 1
     if value_1 == value_2 then
         _report_fail( "Same; value 1: '%s', value 2: '%s'",
@@ -70,7 +72,7 @@ local function _is_not_same( value_1, value_2 )
     return true
 end
 
-local function _is_same_float( value_1, value_2, abs_tolerance )
+function test.is_same_float( value_1, value_2, abs_tolerance )
     _total_checks = _total_checks + 1
     local delta   = math_abs( value_1 - value_2 )
     if delta > abs_tolerance then
@@ -81,7 +83,7 @@ local function _is_same_float( value_1, value_2, abs_tolerance )
     return true
 end    
 
-local function _is_same_bitmap( bmp_1, bmp_2 )
+function test.is_same_bitmap( bmp_1, bmp_2 )
     _total_checks = _total_checks + 1
     if bmp_1:height() ~= bmp_1:height() then
         _report_fail( "Bitmap height not same" )
@@ -94,10 +96,9 @@ local function _is_same_bitmap( bmp_1, bmp_2 )
     for y = 1, bmp_1:height() do
         for x = 1, bmp_1:width() do
             if bmp_1[ y ][ x ] ~= bmp_2[ y ][ x ] then
-                local msg = string.format(
+                _report_fail(
                     "Pixel not same at position x = %d, y = %d; bmp 1: 0x%08X, bmp 2: 0x%08X",
                     x, y, bmp_1[ y ][ x ], bmp_2[ y ][ x ] )
-                _report_fail( msg )
                 return false
             end
         end
@@ -105,7 +106,7 @@ local function _is_same_bitmap( bmp_1, bmp_2 )
     return true
 end
 
-local function _run_test_modules( test_modules )
+function test.run_test_modules( test_modules )
     assert( type( test_modules ) == "table" )
     local total_tests  = 0
     local failed_tests = 0
@@ -141,27 +142,17 @@ local function _run_test_modules( test_modules )
     return status
 end
 
-local function _get_resource_file( ... )
+function test.get_resource_file( ... )
     local info         = debug.getinfo( 1 )
     local resource_dir = string.gsub( info.short_src, "^./(.*)test.lua$", "%1resources/" )
     return resource_dir .. string.format( ... )
 end
 
-local function _get_results_file( ... )
+function test.get_results_file( ... )
     local info         = debug.getinfo( 1 )
     local resource_dir = string.gsub( info.short_src, "^./(.*)test.lua$", "%1results/" )
     return resource_dir .. string.format( ... )
 end
 
-return
-    {
-        is_nil            = _is_nil,
-        is_not_nil        = _is_not_nil,
-        is_same           = _is_same,
-        is_not_same       = _is_not_same,
-        is_same_float     = _is_same_float,
-        is_same_bitmap    = _is_same_bitmap,
-        run_test_modules  = _run_test_modules,
-        get_resource_file = _get_resource_file,
-        get_results_file  = _get_results_file
-    }
+
+return test
