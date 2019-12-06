@@ -18,7 +18,7 @@ See the [reference](/reference.md) for the complete overview of the API.
 
 ## Requirements
 
-* Minimum Lua 3.5
+* Minimum Lua 5.3
 
 ## Examples
 
