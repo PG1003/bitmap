@@ -35,7 +35,7 @@ bmp:save( "kodim23_8bit.bmp", "RGB8", palette )
 ```
 
 The next example loads an image, creates a viewport at the lower left part of the bitmap.
-Then the content of the viewport is saved to a bitmap file with the same format and pallet (in case `kodim23.bmp` was an indexed bitmap).
+Then the content of the viewport is saved to a bitmap file with the same format and palette (in case `kodim23.bmp` was an indexed bitmap).
 
 ``` lua
 local bitmap = require( "bitmap" )
