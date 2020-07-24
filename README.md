@@ -1,4 +1,4 @@
-# Bitmap Manipulation Primitives for Lua
+# Bitmap Manipulation Primitives
 
 A pure Lua module to open, modify and save bitmap images.
 
@@ -18,7 +18,7 @@ See the [reference](/reference.md) for the complete overview of the API.
 
 ## Requirements
 
-* Minimum Lua 5.3
+* Lua version 5.3 or 5.4
 
 ## Examples
 
