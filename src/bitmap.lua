@@ -716,7 +716,7 @@ local function _create( width, height, init_color )
         for x = 1, width do
             row[ x ] = init_color
         end
-        bmp[ y ] = row
+        bmp[ y ] = setmetatable( row, _row_pixel_mask_mt )
     end
     
     return setmetatable( bmp, _bmp_mt )
