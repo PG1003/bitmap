@@ -64,13 +64,13 @@ If the optional `init_color` was not provided then the value '0' (black) will be
 
 ### `diff( left, right )`
 
-Takes two identical size bitmaps and creates a new bitmap with color values that are the difference between the two bitmaps.
+Takes two identical sized bitmaps and creates a new bitmap with color values that are the difference between the two bitmaps.
 The difference in color values are absolute; the color component values ranges from 0 up to 255.
 
 ### `make_viewport( src_bmp, x, y, width, height )`
 
 Returns a viewport that targets an area in the bitmap `src_bmp`.
-`x` and `y` is the position int the bitmap of the viewport's lower left corner.
+`x` and `y` is the position in the bitmap of the viewport's lower left corner.
 `width` and `height` are the dimentions of the viewport.  
 The viewport area must be defined within the dimentions of `src_bmp`.
 
@@ -148,7 +148,7 @@ The pixel size is 32 bits for formats with a total bit count of more than 16 bit
 ## color
 
 A color is a 32 bit value that represents an RGB color model with an alpha.
-Each color component is an 8 bit value ranging from 0 up to 255 and packed as in the table below.
+Each color component is an 8 bit value ranging from 0 up to 255 and is packed as in the table below.
 
 |Color component | Bit mask|
 |----------------|---------|
@@ -160,7 +160,7 @@ Each color component is an 8 bit value ranging from 0 up to 255 and packed as in
 ### `add( left, right )`
 
 Adds two colors.
-The resulting value of color components clipped to 255.
+The resulting value of color components is clipped to 255.
 
 ### `blue( color )`
 
@@ -210,7 +210,7 @@ Returns the red component value from a color.
 ### `sub( left, right )`
 
 Substracts two color.
-The resulting value of color components clipped to 0.
+The resulting value of color components is clipped to 0.
 
 ### `to_hcl( color )`
 
