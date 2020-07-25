@@ -102,12 +102,12 @@ function tests.hcl_to_color()
     _to_color( color.from_hcl, _rgb_hcl )
 end
 
-function tests.quantize_reference()
+function tests.quantize_palette_16_to_42()
     local colors = color.quantize( palettes.palette_16, 42 )
     test.is_same( #colors, 16 )  -- the reference bitmap has only 16 colors
 end
 
-function tests.quantize_lena()
+function tests.quantize_palette_256_to_32()
     local colors = color.quantize( palettes.palette_256, 32 )
     test.is_same( #colors, 32 )
     
