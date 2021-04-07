@@ -233,42 +233,39 @@ local function _save( self, file, format, palette )
     local bitmap_offset    = bitmap_header_size + dib_size + color_table_size
     
     f:write( signature )
-    f:write( string_pack( "<I4", file_size ) )
-    f:write( string_pack( "<I2", bitmap_reserved1 ) )
-    f:write( string_pack( "<I2", bitmap_reserved2 ) )
-    f:write( string_pack( "<I4", bitmap_offset ) )
+    f:write( string_pack( "<I4<I2<I2<I4", file_size, bitmap_reserved1, bitmap_reserved2, bitmap_offset ) )
 
     -- Bitmap dib
-    f:write( string_pack( "I4", dib_size ) )
-    f:write( string_pack( "i4", dib.width ) )
-    f:write( string_pack( "i4", dib.height ) )
-    f:write( string_pack( "I2", 1 ) )       -- Color planes, only 1 supported
-    f:write( string_pack( "I2", dib.bits_per_pixel ) )
-    f:write( string_pack( "I4", dib.compression == "rgb" and 0 or dib.compression == "bitfields" and 3 ) )
-    f:write( string_pack( "I4", dib.bitmap_size ) )
-    f:write( string_pack( "I4", 7787 ) )    -- Horizontal resolution, Gimp uses 7787  pixels per meter
-    f:write( string_pack( "I4", 7787 ) )    -- Vertical resolution
-    f:write( string_pack( "I4", palette and #palette or 0 ) ) -- Number palette colors
-    f:write( string_pack( "I4", 0 ) )       -- Color important, the number of colors used from the color table. 0 means all colors are important
+    f:write( string_pack( "I4i4i4I2I2I4I4I4I4I4I4",
+             dib_size,
+             dib.width,
+             dib.height,
+             1,                         -- Color planes, only 1 supported
+             dib.bits_per_pixel, dib.compression == "rgb" and 0 or dib.compression == "bitfields" and 3,
+             dib.bitmap_size,
+             7787,                      -- Horizontal resolution, Gimp uses 7787  pixels per meter
+             7787,                      -- Vertical resolution
+             palette and #palette or 0, -- Number palette colors
+             0 ) )                      -- Color important, the number of colors used from the color table. 0 means all colors are important
     
     if dib_version >= 4 then
-        f:write( string_pack( "I4", dib.red_mask ) )
-        f:write( string_pack( "I4", dib.green_mask ) )
-        f:write( string_pack( "I4", dib.blue_mask ) )
-        f:write( string_pack( "I4", dib.alpha_mask or 0 ) )
-        f:write( string_pack( "I4", 0 ) )   -- Color space type
-        f:write( string_pack( "I4", 0 ) )   -- Red X
-        f:write( string_pack( "I4", 0 ) )   -- Red Y
-        f:write( string_pack( "I4", 0 ) )   -- Red Z
-        f:write( string_pack( "I4", 0 ) )   -- Green X
-        f:write( string_pack( "I4", 0 ) )   -- Green Y
-        f:write( string_pack( "I4", 0 ) )   -- Green Z
-        f:write( string_pack( "I4", 0 ) )   -- Blue X
-        f:write( string_pack( "I4", 0 ) )   -- Blue Y
-        f:write( string_pack( "I4", 0 ) )   -- Blue Z
-        f:write( string_pack( "I4", 0 ) )   -- Gamma red
-        f:write( string_pack( "I4", 0 ) )   -- Gamma green
-        f:write( string_pack( "I4", 0 ) )   -- Gamma blue
+        f:write( string_pack( "I4I4I4I4I4I4I4I4I4I4I4I4I4I4I4I4I4",
+                 dib.red_mask,
+                 dib.green_mask,
+                 dib.blue_mask, dib.alpha_mask or 0,
+                 0,      -- Color space type
+                 0,      -- Red X
+                 0,      -- Red Y
+                 0,      -- Red Z
+                 0,      -- Green X
+                 0,      -- Green Y
+                 0,      -- Green Z
+                 0,      -- Blue X
+                 0,      -- Blue Y
+                 0,      -- Blue Z
+                 0,      -- Gamma red
+                 0,      -- Gamma green
+                 0 ) )   -- Gamma blue
     end
     
     -- Write color table
@@ -497,14 +494,11 @@ local function _open( file )
 
     -- Bitmap file dib
     local signature        = f:read( 2 )
-    local file_size        = string_unpack( "<I4", f:read( 4 ) )
-    local bitmap_reserved1 = string_unpack( "<I2", f:read( 2 ) )
-    local bitmap_reserved2 = string_unpack( "<I2", f:read( 2 ) )
-    local bitmap_offset    = string_unpack( "<I4", f:read( 4 ) )
-    
     if signature ~= "BM" then
         error( "Unsupported bitmap file type" )
     end
+
+    local file_size, bitmap_reserved1, bitmap_reserved2, bitmap_offset = string_unpack( "<I4<I2<I2<I4", f:read( 12 ) )
 
     local dib = {}
     
@@ -515,15 +509,10 @@ local function _open( file )
                             dib.size == 124 and 5 )
 
     if version == 2 then
-        dib.width          = string_unpack( "i2", f:read( 2 ) )
-        dib.height         = string_unpack( "i2", f:read( 2 ) )
-        dib.color_planes   = string_unpack( "I2", f:read( 2 ) )
-        dib.bits_per_pixel = string_unpack( "I2", f:read( 2 ) )
+        dib.width, dib.height, dib.color_planes, dib.bits_per_pixel = string_unpack( "i2i2I2I2", f:read( 8 ) )
     elseif version > 2 then
-        dib.width          = string_unpack( "i4", f:read( 4 ) )
-        dib.height         = string_unpack( "i4", f:read( 4 ) )
-        dib.color_planes   = assert( string_unpack( "I2", f:read( 2 ) ) == 1 and 1 )    -- Only support for one plane
-        dib.bits_per_pixel = string_unpack( "I2", f:read( 2 ) )
+        dib.width, dib.height, dib.color_planes, dib.bits_per_pixel = string_unpack( "i4i4I2I2", f:read( 12 ) )
+        assert( dib.color_planes == 1 )    -- Only support for one plane
     end
 
     if version >= 3 then
@@ -542,16 +531,13 @@ local function _open( file )
     end
 
     if version >= 4 then
-        dib.red_mask         = string_unpack( "I4", f:read( 4 ) )
-        dib.green_mask       = string_unpack( "I4", f:read( 4 ) )
-        dib.blue_mask        = string_unpack( "I4", f:read( 4 ) )
-        dib.alpha_mask       = string_unpack( "I4", f:read( 4 ) )
+        dib.red_mask, dib.green_mask, dib.blue_mask, dib.alpha_mask = string_unpack( "I4I4I4I4", f:read( 16 ) )
         -- Skip remainig fields of DIB v4 header; this library has no support for colorspaces
     end
     
     -- DIB v5 is not used by this library
     
-    -- 'Allocate' bimap
+    -- Allocate bimap
     assert( dib.height > 0 or dib.height < 0 )
     assert( dib.width > 0 or dib.width < 0 )
     local bmp = {}
