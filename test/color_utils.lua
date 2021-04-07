@@ -1,5 +1,5 @@
-local color    = require( "color")
-local palettes = require( "palettes" )
+local color    = require( "bitmap.color")
+local palettes = require( "bitmap.palettes" )
 local test     = require( "test" )
 
 

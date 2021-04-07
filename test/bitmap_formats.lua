@@ -1,5 +1,5 @@
 local bitmap = require( "bitmap" )
-local color  = require( "color" )
+local color  = require( "bitmap.color" )
 local test   = require( "test" )
 
 local tests = {}
