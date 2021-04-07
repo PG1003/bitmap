@@ -46,7 +46,7 @@ end
 function test.is_nil( value )
     _total_checks = _total_checks + 1
     if value ~= nil then
-        _report_fail( "Is nil" )
+        _report_fail( "Is not nil" )
         return false
     end
     return true
