@@ -9,11 +9,11 @@ local kodim23 = bitmap.open( test.get_resource_file( "kodim23.bmp" ) )
 local function _test_rgb( formats )
     for _, format in ipairs( formats ) do
         local file_1 = test.get_results_file( "kodim23_%s_%d.bmp", format, 1 )
-        kodim23:save( file_1, format )
+        bitmap.save( kodim23, file_1, format )
         local bmp_1, format_1, palette_1 = bitmap.open( file_1 )
         
         local file_2 = test.get_results_file( "kodim23_%s_%d.bmp", format, 2 )
-        bmp_1:save( file_2, format_1 )
+        bitmap.save( bmp_1, file_2, format_1 )
         local bmp_2, format_2, palette_2 = bitmap.open( file_2 )
         
         test.is_same( type( bmp_1 ), "table" )
@@ -40,11 +40,11 @@ function tests.test_indexed()
         local palette  = color.quantize( kodim23:pixels(), n_colors )
         
         local file_1 = test.get_results_file( "kodim23_%s_%d.bmp", format, 1 )
-        kodim23:save( file_1, format, palette )
+        bitmap.save( kodim23, file_1, format, palette )
         local bmp_1, format_1, palette_1 = bitmap.open( file_1 )
         
         local file_2 = test.get_results_file( "kodim23_%s_%d.bmp", format, 2 )
-        bmp_1:save( file_2, format_1, palette )
+        bitmap.save( bmp_1, file_2, format_1, palette )
         local bmp_2, format_2, palette_2 = bitmap.open( file_2 )
         
         test.is_same( type( bmp_1 ), "table" )

@@ -10,10 +10,10 @@
 [make_viewport](#make_viewport-src_bmp-x-y-width-height-)  
 [open](#open-file-)  
 [psnr](#psnr-reference-other-)  
-[bitmap.height](#bitmapheight)  
-[bitmap.pixels](#bitmappixels)  
-[bitmap.save](#bitmapsave-file-format--palette-)  
-[bitmap.width](#bitmapwidth)  
+[save](#save-bmp-file-format--palette-)  
+[bitmap:height](#bitmapheight)  
+[bitmap:pixels](#bitmappixels)  
+[bitmap:width](#bitmapwidth)  
   
 ### color
 
@@ -87,21 +87,21 @@ Calculates the Peak Signal-to-Noise Ratio between the bitmaps `reference` and `o
 The sizes of the bitmaps must be same.
 Returns 4 values; psnr of the color components combined, psnr red, psnr green and psnr blue.
 
+### `save( bmp, file, format [, palette] )`
+
+Saves `bmp` to `file` with the given `format`.
+The `format` is a string folowing a pattern as described [here](#Format-patterns).
+`palette` is required if `format` is a pattern of an indexed bitmap type.
+A `palette` is a table with maximum of 256 that has for each index a color.
+
 ### `bitmap:height()`
 
 Returns the bitmap's height in pixels.
 
 ### `bitmap:pixels()`
 
-Returns a proxy table that transforms the bitmap to an one dimentional array.
-This table can be used to iterate through the pixels, for example with `ipairs`.
-
-### `bitmap:save( file, format [, palette] )`
-
-Saves the bitmap to `file` with the given `format`.
-The `format` is a string folowing a pattern as described [here](#Format-patterns).
-`palette` is required if `format` is a pattern of an indexed bitmap type.
-A `palette` is a table with maximum of 256 that has for each index a color.
+Returns a proxy table that transforms the bitmap to an one-dimentional array.
+This table can be used to iterate through all the pixels of a bitmap, for example with `ipairs`.
 
 ### `bitmap:width()`
 
@@ -132,7 +132,7 @@ Besides the red, green and blue color component this format also supports alpha.
 
 A bitfield format defines first the order of the color components followed by the size of each component.
 Each color component can be defined only once with a maximum size of 8 bits.
-The red, green and blue component are required, alpha is optional.
+The red, green and blue components are required, alpha is optional.
 
 |Format | Pixel bit pattern|
 |-------|------------------|

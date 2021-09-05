@@ -20,7 +20,7 @@ function tests.blit()
     bmp.blit( dst,  9, -2, src1 )
 
     if not test.is_same_bitmap( reference, dst ) then
-        dst:save( test.get_results_file( "blit_partial_overlap.bmp" ), "RGB24" )
+        bmp.save( dst, test.get_results_file( "blit_partial_overlap.bmp" ), "RGB24" )
     end
 
     -- No overlap
@@ -30,7 +30,7 @@ function tests.blit()
     bmp.blit( dst,  1, -4, src2 )
     
     if not test.is_same_bitmap( reference, dst ) then
-        dst:save( test.get_results_file( "blit_no_overlap.bmp" ), "RGB24" )
+        bmp.save( dst, test.get_results_file( "blit_no_overlap.bmp" ), "RGB24" )
     end
 end
 
@@ -60,7 +60,7 @@ function tests.modify_via_viewport()
     _fill_vp( vp5, 0xFF00FF00 )
 
     if not test.is_same_bitmap( reference, dst ) then
-        dst:save( test.get_results_file( "modify_via_viewport.bmp" ), "RGB24" )
+        bmp.save( dst, test.get_results_file( "modify_via_viewport.bmp" ), "RGB24" )
     end
 end
 
@@ -77,7 +77,7 @@ function tests.save_viewport_content()
     local vp = bmp.make_viewport( dst, 2, 2, 10, 10 )
 
     if not test.is_same_bitmap( reference, vp ) then
-        vp:save( test.get_results_file( "save_viewport_content.bmp" ), "RGB24" )
+        bmp.save( vp, test.get_results_file( "save_viewport_content.bmp" ), "RGB24" )
     end
 end
 

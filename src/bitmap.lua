@@ -196,30 +196,28 @@ end
 -- Bitmap library
 --
 
-local function _save( self, file, format, palette )
+local function _save( bmp, file, format, palette )
         
     local f = io.open( file, "w+b" )
     if not f then
         error( "Cannot create file: " .. file, 0 )
     end
     
-    local dib = {}
+    local compression, bits_per_pixel, red_mask, green_mask, blue_mask, alpha_mask = _decode_bitmap_format( format )
     
-    dib.compression, dib.bits_per_pixel, dib.red_mask, dib.green_mask, dib.blue_mask, dib.alpha_mask = _decode_bitmap_format( format )
+    palette = bits_per_pixel <= 8 and palette
     
-    palette = dib.bits_per_pixel <= 8 and palette
-    
-    dib.width  = self:width()
-    dib.height = self:height()
+    local width  = bmp:width()
+    local height = bmp:height()
     
     -- A bitmap row must always be a multiple of 4 bytes
-    local padding_in_bytes = ( 4 - ( dib.width * dib.bits_per_pixel ) & 0x03 )
-    local row_in_bytes     = ( dib.width * dib.bits_per_pixel ) // 32 + padding_in_bytes
-    dib.bitmap_size        = row_in_bytes * dib.height
+    local padding_in_bytes = ( 4 - ( width * bits_per_pixel ) & 0x03 )
+    local row_in_bytes     = ( width * bits_per_pixel ) // 32 + padding_in_bytes
+    local bitmap_size      = row_in_bytes * height
     
     -- Use dib v3 indexed bitmaps or v4 for larger pixel sizes
     -- The v4 header is larger and contains data which is not used by indexed bitmaps
-    local dib_version = dib.compression == "rgb" and 3 or 4
+    local dib_version = compression == "rgb" and 3 or 4
     
     -- Bitmap file header
     local bitmap_header_size = 14
@@ -227,7 +225,7 @@ local function _save( self, file, format, palette )
     local color_table_size   = palette and #palette * 4 or 0    -- Each entry in the color table is 4 bytes
     
     local signature        = "BM"
-    local file_size        = bitmap_header_size + dib_size + color_table_size + dib.bitmap_size
+    local file_size        = bitmap_header_size + dib_size + color_table_size + bitmap_size
     local bitmap_reserved1 = 0
     local bitmap_reserved2 = 0
     local bitmap_offset    = bitmap_header_size + dib_size + color_table_size
@@ -238,11 +236,11 @@ local function _save( self, file, format, palette )
     -- Bitmap dib
     f:write( string_pack( "I4i4i4I2I2I4I4I4I4I4I4",
              dib_size,
-             dib.width,
-             dib.height,
+             width,
+             height,
              1,                         -- Color planes, only 1 supported
-             dib.bits_per_pixel, dib.compression == "rgb" and 0 or dib.compression == "bitfields" and 3,
-             dib.bitmap_size,
+             bits_per_pixel, compression == "rgb" and 0 or compression == "bitfields" and 3,
+             bitmap_size,
              7787,                      -- Horizontal resolution, Gimp uses 7787  pixels per meter
              7787,                      -- Vertical resolution
              palette and #palette or 0, -- Number palette colors
@@ -250,9 +248,10 @@ local function _save( self, file, format, palette )
     
     if dib_version >= 4 then
         f:write( string_pack( "I4I4I4I4I4I4I4I4I4I4I4I4I4I4I4I4I4",
-                 dib.red_mask,
-                 dib.green_mask,
-                 dib.blue_mask, dib.alpha_mask or 0,
+                 red_mask,
+                 green_mask,
+                 blue_mask,
+                 alpha_mask or 0,
                  0,      -- Color space type
                  0,      -- Red X
                  0,      -- Red Y
@@ -270,21 +269,21 @@ local function _save( self, file, format, palette )
     
     -- Write color table
     if palette then
-        assert( #palette <= ( 2 ^ dib.bits_per_pixel ) )
+        assert( #palette <= ( 2 ^ bits_per_pixel ) )
         for i = 1, #palette do
             
             f:write( string_pack( "I4", palette[ i ] ) )
         end
     end
     
-    local x_start = dib.width > 0 and 1 or dib.width
-    local x_stop  = dib.width > 0 and dib.width or 1
-    local x_step  = dib.width > 0 and 1 or -1
-    local y_start = dib.height > 0 and 1 or dib.height
-    local y_stop  = dib.height > 0 and dib.height or 1
-    local y_step  = dib.height > 0 and 1 or -1
-    if dib.compression == "rgb" then
-        if dib.bits_per_pixel <= 8 then
+    local x_start = width > 0 and 1 or width
+    local x_stop  = width > 0 and width or 1
+    local x_step  = width > 0 and 1 or -1
+    local y_start = height > 0 and 1 or height
+    local y_stop  = height > 0 and height or 1
+    local y_step  = height > 0 and 1 or -1
+    if compression == "rgb" then
+        if bits_per_pixel <= 8 then
             assert( palette, "Format '" .. format .. "' requires a palette" )
             
             local to_Lab = color.to_Lab
@@ -297,11 +296,10 @@ local function _save( self, file, format, palette )
                 Lab_lookup[ i ]      = { to_Lab( value ) }
             end
             
-            local bits_per_pixel = dib.bits_per_pixel
             local delta_e94      = color.delta_e94
             local shift_start    = 32 - bits_per_pixel
             for y = y_start, y_stop, y_step do
-                local row   = self[ y ]
+                local row   = bmp[ y ]
                 local shift = shift_start
                 local chunk = 0
                 for x = x_start, x_stop, x_step do
@@ -333,10 +331,10 @@ local function _save( self, file, format, palette )
                 end
                 f:write( string_pack( ">I4", chunk ) )
             end
-        elseif dib.bits_per_pixel == 16 then
+        elseif bits_per_pixel == 16 then
             -- Pack as RGB555
             for y = y_start, y_stop, y_step do
-                local row   = self[ y ]
+                local row   = bmp[ y ]
                 local chunk = 0
                 for x = x_start, x_stop, x_step do
                     local value = row[ x ]
@@ -358,51 +356,51 @@ local function _save( self, file, format, palette )
                 end
                 f:write( string_pack( ">I4", chunk ) )
             end
-        elseif dib.bits_per_pixel == 24 then
+        elseif bits_per_pixel == 24 then
             -- Pack as RGB888
-            local padding_mod = ( dib.width * 3 ) & 0x03
+            local padding_mod = ( width * 3 ) & 0x03
             local padding     = padding_mod > 0 and string_pack( "I".. 4 - padding_mod, 0 ) or ""
             for y = y_start, y_stop, y_step do
-                local row = self[ y ]
+                local row = bmp[ y ]
                 for x = x_start, x_stop, x_step do
                     f:write( string_pack( "I3", row[ x ] & 0x00FFFFFF ) )
                 end
                 f:write( padding )
             end
-        elseif dib.bits_per_pixel == 32 then
+        elseif bits_per_pixel == 32 then
             -- Pack as ARGB8888 --> no conversion
             for y = y_start, y_stop, y_step do
-                local row = self[ y ]
+                local row = bmp[ y ]
                 for x = x_start, x_stop, x_step do
                     f:write( string_pack( "I4", row[ x ] & 0xFFFFFFFF ) )
                 end
             end
         end
-    elseif dib.compression == "bitfields" then
+    elseif compression == "bitfields" then
         -- Only 16 or 32 bits are supported by bitfields
         
-        local r_shift = _calc_shift( 0x00FF0000, dib.red_mask )
-        local g_shift = _calc_shift( 0x0000FF00, dib.green_mask )
-        local b_shift = _calc_shift( 0x000000FF, dib.blue_mask )
+        local r_shift = _calc_shift( 0x00FF0000, red_mask )
+        local g_shift = _calc_shift( 0x0000FF00, green_mask )
+        local b_shift = _calc_shift( 0x000000FF, blue_mask )
         
         local masks_shifts =
         {
-            { dib.red_mask   << -r_shift, r_shift },
-            { dib.green_mask << -g_shift, g_shift },
-            { dib.blue_mask  << -b_shift, b_shift }
+            { red_mask   << -r_shift, r_shift },
+            { green_mask << -g_shift, g_shift },
+            { blue_mask  << -b_shift, b_shift }
         }
         
-        if dib.alpha_mask > 0 then
-            local a_shift                     = _calc_shift( 0xFF000000, dib.alpha_mask )
-            masks_shifts[ #masks_shifts + 1 ] = { dib.alpha_mask << -a_shift, a_shift }
+        if alpha_mask > 0 then
+            local a_shift                     = _calc_shift( 0xFF000000, alpha_mask )
+            masks_shifts[ #masks_shifts + 1 ] = { alpha_mask << -a_shift, a_shift }
         end
         
-        local pixel_size   = assert( dib.bits_per_pixel <= 16 and 2 or dib.bits_per_pixel <= 32 and 4 )
+        local pixel_size   = assert( bits_per_pixel <= 16 and 2 or bits_per_pixel <= 32 and 4 )
         local pack_pattern = string.format( "I%d", pixel_size )
-        local padding_mod  = ( dib.width * pixel_size ) & 0x03
+        local padding_mod  = ( width * pixel_size ) & 0x03
         local padding      = padding_mod > 0 and string_pack( "I".. 4 - padding_mod, 0 ) or ""
         for y = y_start, y_stop, y_step do
-            local row = self[ y ]
+            local row = bmp[ y ]
             for x = x_start, x_stop, x_step do
                 local value = row[ x ]
                 local chunk = 0
@@ -475,7 +473,6 @@ local _bmp_mt =
     
     __index = 
         {
-            save      = _save,
             width     = _width,
             height    = _height,
             pixels    = _pixels,
@@ -484,6 +481,46 @@ local _bmp_mt =
     __newindex = _mask_new_pixels
 }
 
+local function _read_dib( f )
+   
+    local dib_size = string_unpack( "I4", f:read( 4 ) )
+    local version  = assert( dib_size == 12 and 2 or
+                             dib_size == 40 and 3 or
+                             dib_size == 108 and 4 or
+                             dib_size == 124 and 5 )
+
+    if version == 2 then
+        local width, height, color_planes, bits_per_pixel = string_unpack( "i2i2I2I2", f:read( 8 ) ) -- width, height, color planes, bits per pixel
+        return dib_size, width, height, bits_per_pixel 
+    else
+        local width, height, color_planes, bits_per_pixel = string_unpack( "i4i4I2I2", f:read( 12 ) )
+        assert( color_planes == 1 )    -- Only support for one plane
+ 
+        local compression_type = string_unpack( "I4", f:read( 4 ) )
+        local compression      = assert( compression_type == 0 and "rgb" or       -- No alpha
+                                         compression_type == 3 and "bitfields" or -- (alpha) bitfields only for 16 and 32 bit per pixel bitmaps
+                                         compression_type == 6 and "bitfields",   -- Was BI_ALPHABITFIELDS, applications generally support aplha with bitfields
+                                         "Unsupported compression method" )
+        -- Skip bitmap size
+        -- Skip horizontal resolution
+        -- Skip vertical resolution
+        f:seek( "cur", 12 )
+        local number_palette_colors = string_unpack( "I4", f:read( 4 ) )
+        -- Skip important color
+        f:seek( "cur", 4 )
+        
+        if version < 4 then
+            return dib_size, width, height, bits_per_pixel, compression, number_palette_colors
+        end
+
+        local red_mask, green_mask, blue_mask, alpha_mask = string_unpack( "I4I4I4I4", f:read( 16 ) )
+        -- Skip remainig fields of DIB v4 header; this library has no support for colorspaces
+        
+        return dib_size, width, height, bits_per_pixel, compression, number_palette_colors, red_mask, green_mask, blue_mask, alpha_mask
+        
+        -- DIB v5 is not used by this library
+    end
+end
 
 local function _open( file )
     
@@ -493,87 +530,49 @@ local function _open( file )
     end
 
     -- Bitmap file dib
-    local signature        = f:read( 2 )
+    local signature = f:read( 2 )
     if signature ~= "BM" then
         error( "Unsupported bitmap file type" )
     end
 
     local file_size, bitmap_reserved1, bitmap_reserved2, bitmap_offset = string_unpack( "<I4<I2<I2<I4", f:read( 12 ) )
-
-    local dib = {}
-    
-    dib.size      = string_unpack( "I4", f:read( 4 ) )
-    local version = assert( dib.size == 12 and 2 or
-                            dib.size == 40 and 3 or
-                            dib.size == 108 and 4 or
-                            dib.size == 124 and 5 )
-
-    if version == 2 then
-        dib.width, dib.height, dib.color_planes, dib.bits_per_pixel = string_unpack( "i2i2I2I2", f:read( 8 ) )
-    elseif version > 2 then
-        dib.width, dib.height, dib.color_planes, dib.bits_per_pixel = string_unpack( "i4i4I2I2", f:read( 12 ) )
-        assert( dib.color_planes == 1 )    -- Only support for one plane
-    end
-
-    if version >= 3 then
-        local compression         = string_unpack( "I4", f:read( 4 ) )
-        dib.compression           = assert( compression == 0 and "rgb" or       -- No alpha
-                                            compression == 3 and "bitfields" or -- (alpha) bitfields only for 16 and 32 bit per pixel bitmaps
-                                            compression == 6 and "bitfields",   -- Was BI_ALPHABITFIELDS, applications generally support aplha with bitfields
-                                            "Unsupported compression method" )
-        dib.bitmap_size           = string_unpack( "I4", f:read( 4 ) )
-        -- Skip horizontal resolution
-        -- Skip vertical resolution
-        f:seek( "cur", 8 )
-        dib.number_palette_colors = string_unpack( "I4", f:read( 4 ) )
-        -- Skip important color
-        f:seek( "cur", 4 )
-    end
-
-    if version >= 4 then
-        dib.red_mask, dib.green_mask, dib.blue_mask, dib.alpha_mask = string_unpack( "I4I4I4I4", f:read( 16 ) )
-        -- Skip remainig fields of DIB v4 header; this library has no support for colorspaces
-    end
-    
-    -- DIB v5 is not used by this library
+    local dib_size, width, height, bits_per_pixel, compression, number_palette_colors, red_mask, green_mask, blue_mask, alpha_mask = _read_dib( f )
     
     -- Allocate bimap
-    assert( dib.height > 0 or dib.height < 0 )
-    assert( dib.width > 0 or dib.width < 0 )
+    assert( height > 0 or height < 0 )
+    assert( width > 0 or width < 0 )
     local bmp = {}
-    for y = 1, dib.height do
+    for y = 1, height do
         bmp[ y ] = {}
     end 
     
-    local x_start = dib.width > 0 and 1 or dib.width
-    local x_stop  = dib.width > 0 and dib.width or 1
-    local x_step  = dib.width > 0 and 1 or -1
-    local y_start = dib.height > 0 and 1 or dib.height
-    local y_stop  = dib.height > 0 and dib.height or 1
-    local y_step  = dib.height > 0 and 1 or -1
+    local x_start = width > 0 and 1 or width
+    local x_stop  = width > 0 and width or 1
+    local x_step  = width > 0 and 1 or -1
+    local y_start = height > 0 and 1 or height
+    local y_stop  = height > 0 and height or 1
+    local y_step  = height > 0 and 1 or -1
     
-    local row_data_len = dib.bits_per_pixel * math.abs( dib.width ) // 8
+    local row_data_len = bits_per_pixel * math.abs( width ) // 8
     row_data_len       = row_data_len + ( 4 - row_data_len & 0x03 )
     
     assert( f:seek( "set", bitmap_offset ) == bitmap_offset )
     
     local palette = nil
-    if dib.compression == "rgb" then
-        if dib.bits_per_pixel <= 8 then
+    if compression == "rgb" then
+        if bits_per_pixel <= 8 then
             -- We have a color table...
             palette                 = {}
-            local color_table_unpack_format = "<I4"
-            local color_table_start = 14 + dib.size -- Bitmap dib is 14 bytes + size of dib
+            local color_table_start = 14 + dib_size -- Bitmap dib is 14 bytes + size of dib
             assert( f:seek( "set", color_table_start ) )
             -- Fill table
-            local entries    = dib.number_palette_colors == 0 and 2 ^ dib.bits_per_pixel or dib.number_palette_colors
+            local entries    = number_palette_colors == 0 and 2 ^ bits_per_pixel or number_palette_colors
             local table_data = f:read( 4 * entries )
             local table_pos  = 1
             for index = 1, entries do
-                palette[ index ], table_pos = string_unpack( color_table_unpack_format, table_data, table_pos )
+                palette[ index ], table_pos = string_unpack( "<I4", table_data, table_pos )
             end
             
-            local bits_per_pixel = dib.bits_per_pixel
             local mask           = 2 ^ bits_per_pixel - 1
             local shift_start    = 32 - bits_per_pixel
             for y = y_start, y_stop, y_step do
@@ -593,7 +592,7 @@ local function _open( file )
                 end
                 setmetatable( row, _row_pixel_mask_mt )
             end
-        elseif dib.bits_per_pixel == 16 then
+        elseif bits_per_pixel == 16 then
             -- Packed as RGB555
             for y = y_start, y_stop, y_step do
                 local row_data     = f:read( row_data_len )
@@ -611,7 +610,7 @@ local function _open( file )
                 end
                 setmetatable( row, _row_pixel_mask_mt )
             end
-        elseif dib.bits_per_pixel == 24 then
+        elseif bits_per_pixel == 24 then
             -- Packed as RGB888
             for y = y_start, y_stop, y_step do
                 local row_data     = f:read( row_data_len )
@@ -624,7 +623,7 @@ local function _open( file )
                 end
                 setmetatable( row, _row_pixel_mask_mt )
             end
-        elseif dib.bits_per_pixel == 32 then
+        elseif bits_per_pixel == 32 then
             -- Packed as ARGB8888 --> no conversion
             for y = y_start, y_stop, y_step do
                 local row_data     = f:read( row_data_len )
@@ -638,29 +637,29 @@ local function _open( file )
         else
             error( "Unsupported uncompressed bitmap fromat" )
         end
-    elseif dib.compression == "bitfields" then
+    elseif compression == "bitfields" then
         -- Only 16 or 32 bits are supported by bitfields
-        local pixel_size     = assert( dib.bits_per_pixel <= 16 and 2 or dib.bits_per_pixel <= 32 and 4 )
+        local pixel_size     = assert( bits_per_pixel <= 16 and 2 or bits_per_pixel <= 32 and 4 )
         local unpack_pattern = string.format( "I%d", pixel_size )
                 
         -- Shifts and masks for transforming to RGBA8888
         local masks_shifts =
         {
-            { dib.red_mask,   _calc_shift( dib.red_mask,   0x00FF0000 ), 0x00FF0000 },
-            { dib.green_mask, _calc_shift( dib.green_mask, 0x0000FF00 ), 0x0000FF00 },
-            { dib.blue_mask,  _calc_shift( dib.blue_mask,  0x000000FF ), 0x000000FF }
+            { red_mask,   _calc_shift( red_mask,   0x00FF0000 ), 0x00FF0000 },
+            { green_mask, _calc_shift( green_mask, 0x0000FF00 ), 0x0000FF00 },
+            { blue_mask,  _calc_shift( blue_mask,  0x000000FF ), 0x000000FF }
         }
         
-        if dib.alpha_mask > 0 then
+        if alpha_mask > 0 then
             masks_shifts[ #masks_shifts + 1 ] =
             {
-                dib.alpha_mask,
-                _calc_shift( dib.alpha_mask, 0xFF000000 ),
+                alpha_mask,
+                _calc_shift( alpha_mask, 0xFF000000 ),
                 0xFF000000
             }
         end
         
-        local unpack_format = string.format( "I%d", dib.bits_per_pixel // 8 )
+        local unpack_format = string.format( "I%d", bits_per_pixel // 8 )
         for y = y_start, y_stop, y_step do
             local row_data     = f:read( row_data_len )
             local row_data_pos = 1
@@ -684,7 +683,8 @@ local function _open( file )
     
     setmetatable( bmp, _bmp_mt )
     
-    local format = encode_bitmap_format( dib.compression, dib.bits_per_pixel, dib.red_mask, dib.green_mask, dib.blue_mask, dib.alpha_mask )
+    local format = encode_bitmap_format( compression, bits_per_pixel, red_mask, green_mask, blue_mask, alpha_mask )
+    
     return bmp, format, palette
 end
 
@@ -831,6 +831,7 @@ end
 
 local bitmap =
 {
+    save          = _save,
     create        = _create,
     open          = _open,
     make_viewport = _make_viewport,
