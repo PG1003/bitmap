@@ -42,23 +42,23 @@ local table_remove = table.remove
 -- RGB utility functions
 --
 
-function color.red( color )
+local function _red( color )
     return ( color & 0x00FF0000 ) >> 16
 end
 
-function color.green( color )
+local function _green( color )
     return ( color & 0x0000FF00 ) >> 8
 end
 
-function color.blue( color )
+local function _blue( color )
     return color & 0x000000FF
 end
 
-function color.alpha( color )
+local function _alpha( color )
     return ( color & 0xFF000000 ) >> 24
 end
     
- function color.add( left, right )
+local function _add( left, right )
     local r = math_min( ( ( left & 0x00FF0000 ) >> 16 ) + ( ( right & 0x000000FF ) >> 16 ), 255 )
     local g = math_min( ( ( left & 0x0000FF00 ) >>  8 ) + ( ( right & 0x0000FF00 ) >>  8 ), 255 )
     local b = math_min(   ( left & 0x000000FF )         +   ( right & 0x00FF0000 ),         255 )
@@ -67,7 +67,7 @@ end
     return r << 16 | g << 8 | b | a << 24
 end
     
-function color.sub( left, right )
+local function _sub( left, right )
     local r = math_max( ( ( left & 0x00FF0000 ) >> 16 ) - ( ( right & 0x00FF0000 ) >> 16 ), 255 )
     local g = math_max( ( ( left & 0x0000FF00 ) >>  8 ) - ( ( right & 0x0000FF00 ) >>  8 ), 255 )
     local b = math_max(   ( left & 0x000000FF )         -   ( right & 0x000000FF )        , 255 )
@@ -76,11 +76,11 @@ function color.sub( left, right )
     return r << 16  | g << 8 | b | a << 24
 end
 
-function color.to_rgba( color )
+local function _to_rgba( color )
     return ( color & 0x00FF0000 ) >> 16, ( color & 0x0000FF00 ) >>  8, color & 0x000000FF, ( color & 0xFF000000 ) >> 24
 end
 
-function color.from_rgba( r, g, b, a )
+local function _from_rgba( r, g, b, a )
     local _r = ( r // 1 ) & 0xFF
     local _g = ( g // 1 ) & 0xFF
     local _b = ( b // 1 ) & 0xFF
@@ -97,7 +97,7 @@ end
 --      https://www.rapidtables.com/convert/color/index.html
 --
 
-function color.to_hsv( color )
+local function _to_hsv( color )
     local r     = ( ( color & 0x00FF0000 ) >> 16 ) / 255.0
     local g     = ( ( color & 0x0000FF00 ) >>  8 ) / 255.0
     local b     =   ( color & 0x000000FF )         / 255.0
@@ -123,7 +123,7 @@ function color.to_hsv( color )
     return h, delta / max, max, a
 end
 
-function color.from_hsv( h, s, v, a )
+local function _from_hsv( h, s, v, a )
     local alpha = a and math_max( 0, a * 255.0 // 1 ) << 24 or 0xFF000000
     if s == 0.0 then
         local value = math_max( 0, v * 255.0 // 1 )
@@ -167,7 +167,7 @@ function color.from_hsv( h, s, v, a )
     end
 end
 
-function color.to_hsl( color )
+local function _to_hsl( color )
     local r = ( color & 0xFF0000 ) / 0xFF0000
     local g = ( color & 0x00FF00 ) / 0x00FF00
     local b = ( color & 0x0000FF ) / 0x0000FF
@@ -224,7 +224,7 @@ local function _h_to_rgb( foo, bar, h )
     return foo
 end
 
-function color.from_hsl( h, s, l )
+local function _from_hsl( h, s, l )
     if s == 0 then
         local gray = l * 0xFF // 1
         return gray << 16 | gray << 8 | gray | 0xFF000000
@@ -261,8 +261,6 @@ local function _to_Lab( color )
     return ( 116.0 * y ) - 16.0, 500.0 * ( x - y ), 200.0 * ( y - z )
 end
 
-color.to_Lab = _to_Lab
-
 local function _from_Lab( _L, _a, _b )
     local y = ( _L + 16.0 ) / 116.0
     local x = _a / 500.0 + y
@@ -288,9 +286,7 @@ local function _from_Lab( _L, _a, _b )
     return r << 16 | g << 8 | b | 0xFF000000
 end
 
-color.from_Lab = _from_Lab
-
-function color.to_hcl( color )
+local function _to_hcl( color )
     local L, a, b = _to_Lab( color )
     local c       = math_sqrt( a ^ 2.0 + b ^ 2.0 )
     local h       = math_atan( b, a )
@@ -300,7 +296,7 @@ function color.to_hcl( color )
     return h, c, L
 end
 
-function color.from_hcl( h, c, l )
+local function _from_hcl( h, c, l )
     local h_rad = math_pi * h / 180.0
     local a     = math_cos( h_rad ) * c
     local b     = math_sin( h_rad ) * c
@@ -308,7 +304,7 @@ function color.from_hcl( h, c, l )
     return _from_Lab( l, a, b )
 end
 
-function color.luminance( color )
+local function _luminance( color )
     local r = ( ( color & 0x00FF0000 ) >> 16 ) / 255.0
     local g = ( ( color & 0x0000FF00 ) >>  8 ) / 255.0
     local b =   ( color & 0x000000FF )         / 255.0
@@ -336,11 +332,11 @@ end
 -- https://en.wikipedia.org/wiki/Color_difference
 -- http://www.brucelindbloom.com/index.html?ColorDifferenceCalc.html
 
-function color.delta_e76( _L1, _a1, _b1, _L2, _a2, _b2 )
+local function _delta_e76( _L1, _a1, _b1, _L2, _a2, _b2 )
     return math_sqrt( ( _L2 - _L1 ) ^ 2.0 + ( _a2 - _a1 ) ^ 2.0 + ( _b2 - _b1 ) ^ 2.0 )
 end
 
-function color.delta_e94( _L1, _a1, _b1, _L2, _a2, _b2 )
+local function _delta_e94( _L1, _a1, _b1, _L2, _a2, _b2 )
     local C1 = math_sqrt( ( _a1 ^ 2.0 ) + ( _b1 ^ 2.0 ) )
     local C2 = math_sqrt( ( _a2 ^ 2.0 ) + ( _b2 ^ 2.0 ) )
     local dC = C2 - C1
@@ -362,7 +358,7 @@ local _63deg  = math_rad(  63.0 )
 local _275deg = math_rad( 275.0 )
 local _360deg = 2.0 * math_pi
 
-local function delta_e2000( _L1, _a1, _b1, _L2, _a2, _b2 )
+local function _delta_e2000( _L1, _a1, _b1, _L2, _a2, _b2 )
     local b1_2 = _b1 ^ 2.0
     local b2_2 = _b2 ^ 2.0
     local h_x  = ( math_sqrt( _a1 ^ 2.0 + b1_2 ) + math_sqrt( _a2 ^ 2.0 + b2_2 ) ) / 2.0
@@ -436,7 +432,7 @@ local function _sort_b( left, right )
     return left[ 3 ] < right[ 3 ]
 end
     
-function color.quantize( colors, n_colors )
+local function _quantize( colors, n_colors )
     assert( type( colors ) == "table" )
     assert( math.type( n_colors ) == "integer" )
     assert( n_colors > 1 )
@@ -606,6 +602,29 @@ function color.quantize( colors, n_colors )
     return palette
 end
 
-
+local color =
+{
+    red         = _red,
+    green       = _green,
+    blue        = _blue,
+    alpha       = _alpha,
+    add         = _add,
+    sub         = _sub,
+    to_rgba     = _to_rgba,
+    from_rgba   = _from_rgba,
+    to_hsv      = _to_hsv,
+    from_hsv    = _from_hsv,
+    to_hsl      = _to_hsl,
+    from_hsl    = _from_hsl,
+    to_Lab      = _to_Lab,
+    from_Lab    = _from_Lab,
+    to_hcl      = _to_hcl,
+    from_hcl    = _from_hcl,
+    luminance   = _luminance,
+    delta_e76   = _delta_e76,
+    delta_e94   = _delta_e94,
+--    delta_e2000 = _delta_e2000,
+    quantize    = _quantize
+}
 
 return color
