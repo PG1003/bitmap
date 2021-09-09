@@ -251,9 +251,9 @@ local function _to_Lab( color )
     local y = ( r * 21.26 + g * 71.52 + b *  7.22 ) / 100.000
     local z = ( r *  1.93 + g * 11.92 + b * 95.05 ) / 108.883
 
-    if x > 0.008856 then x = x ^ ( 1.0 / 3.0 ) else x = ( 7.787 * x ) + ( 16.0 / 116.0 ) end
-    if y > 0.008856 then y = y ^ ( 1.0 / 3.0 ) else y = ( 7.787 * y ) + ( 16.0 / 116.0 ) end
-    if z > 0.008856 then z = z ^ ( 1.0 / 3.0 ) else z = ( 7.787 * z ) + ( 16.0 / 116.0 ) end
+    if x > 0.00885645167904 then x = x ^ ( 1.0 / 3.0 ) else x = ( 7.78703703704 * x ) + ( 16.0 / 116.0 ) end
+    if y > 0.00885645167904 then y = y ^ ( 1.0 / 3.0 ) else y = ( 7.78703703704 * y ) + ( 16.0 / 116.0 ) end
+    if z > 0.00885645167904 then z = z ^ ( 1.0 / 3.0 ) else z = ( 7.78703703704 * z ) + ( 16.0 / 116.0 ) end
 
     return ( 116.0 * y ) - 16.0, 500.0 * ( x - y ), 200.0 * ( y - z )
 end
@@ -265,9 +265,9 @@ local function _from_Lab( _L, _a, _b )
     local x = _a / 500.0 + y
     local z = y - _b / 200.0
 
-    if ( x ^ 3.0 ) > 0.008856 then x = x ^ 3.0 else x = ( x - 16.0 / 116.0 ) / 7.787 end
-    if ( y ^ 3.0 ) > 0.008856 then y = y ^ 3.0 else y = ( y - 16.0 / 116.0 ) / 7.787 end
-    if ( z ^ 3.0 ) > 0.008856 then z = z ^ 3.0 else z = ( z - 16.0 / 116.0 ) / 7.787 end
+    if ( x ^ 3.0 ) > 0.00885645167904 then x = x ^ 3.0 else x = ( x - 16.0 / 116.0 ) / 7.78703703704 end
+    if ( y ^ 3.0 ) > 0.00885645167904 then y = y ^ 3.0 else y = ( y - 16.0 / 116.0 ) / 7.78703703704 end
+    if ( z ^ 3.0 ) > 0.00885645167904 then z = z ^ 3.0 else z = ( z - 16.0 / 116.0 ) / 7.78703703704 end
 
     -- Observer = 2°, Illuminant = D65
     local r = x *  3.080093082 + y * -1.5372 + z * -0.542890638
@@ -278,9 +278,9 @@ local function _from_Lab( _L, _a, _b )
     if g > 0.0031308 then g = 1.055 * ( g ^ ( 1.0 / 2.4 ) ) - 0.055 else g = 12.92 * g end
     if b > 0.0031308 then b = 1.055 * ( b ^ ( 1.0 / 2.4 ) ) - 0.055 else b = 12.92 * b end
     
-    r = math_max( 0, ( 0.5 + r * 255.0 ) // 1 )
-    g = math_max( 0, ( 0.5 + g * 255.0 ) // 1 )
-    b = math_max( 0, ( 0.5 + b * 255.0 ) // 1 )
+    r = math_min( math_max( ( 0.5 + r * 255.0 ) // 1, 0 ), 255 )
+    g = math_min( math_max( ( 0.5 + g * 255.0 ) // 1, 0 ), 255 )
+    b = math_min( math_max( ( 0.5 + b * 255.0 ) // 1, 0 ), 255 )
     
     return r << 16 | g << 8 | b | 0xFF000000
 end
