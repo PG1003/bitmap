@@ -7,6 +7,7 @@
 [blit](#blit-dst-x-y-src-)  
 [create](#create-width-height--init_color-)  
 [diff](#diff-left-right-)  
+[dither_bw](#dither_bw-bmp-)  
 [make_viewport](#make_viewport-src_bmp-x-y-width-height-)  
 [open](#open-file-)  
 [psnr](#psnr-reference-other-)  
@@ -26,6 +27,7 @@
 [from_hsv](#from_hsv-h-s-v--a-)  
 [from_Lab](#from_lab-l-a-b-)  
 [from_rgba](#from_rgba-r-g-b--a-)  
+[luminance](#luminance-color-)  
 [quantize](#quantize-colors-n_colors-)  
 [red](#red-color-)  
 [sub](#sub-left-right-)  
@@ -66,6 +68,10 @@ If the optional `init_color` was not provided then the value '0' (black) will be
 
 Takes two identical sized bitmaps and creates a new bitmap with color values that are the difference between the two bitmaps.
 The difference in color values are absolute; the color component values ranges from 0 up to 255.
+
+### `dither_bw( bmp )`
+
+Converts a bitmap to a dithered black/white image by using the Floyd-Steinberg algorithm.
 
 ### `make_viewport( src_bmp, x, y, width, height )`
 
@@ -196,6 +202,11 @@ Returns a color that is converted from the CIE Lab color model values.
 
 Returns a color that is converted from the RGB color component values.
 When the optional alpha is not provided the default value of 255 will be used.
+
+### `luminance( color )`
+
+Returns the _L_ component of the Lab color spaces which is the luminance of the color.
+The advantage over this function over the [to_Lab](#to_lab-color-) function is the simplified and faster calculation.
 
 ### `quantize( colors, n_colors )`
 
