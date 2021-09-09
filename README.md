@@ -11,7 +11,7 @@ A pure Lua module to open, modify and save bitmap images.
   * bitfields, including alpha.
 * Additional color module providing the following features;
   * colorspace conversions back and forth between RGB and other formats like HSV, HSL, Lab and HCL.
-  * color comparison with Delta E94.
+  * color comparison with Delta E76 and Delta E94.
   * color quantisation using median cut.
 
 See the [reference](/reference.md) for the complete overview of the API.
@@ -22,29 +22,28 @@ See the [reference](/reference.md) for the complete overview of the API.
 
 ## Examples
 
-The following example loads an image and convert it to a 256 color 8 bit indexed bitmap.
+The following example loads a btimap image and convert it to a 256 color 8 bit indexed bitmap.
 
 ``` lua
 local bitmap = require( "bitmap" )
-local color  = require( "color" )
+local color  = require( "bitmap.color" )
 
 local bmp     = bitmap.open( "kodim23.bmp" )
-local palette = color.quantize( bmp.pixels(), 256 )
+local palette = color.quantize( bmp:pixels(), 256 )
 
-bmp:save( "kodim23_8bit.bmp", "RGB8", palette )
+bitmap.save( bmp, "kodim23_8bit.bmp", "RGB8", palette )
 ```
 
-The next example loads an image, creates a viewport at the lower left part of the bitmap.
+The next example loads a bitmap image, creates a viewport at the lower left part of the bitmap.
 Then the content of the viewport is saved to a bitmap file with the same format and palette (in case `kodim23.bmp` was an indexed bitmap).
 
 ``` lua
 local bitmap = require( "bitmap" )
-local color  = require( "color" )
 
 local bmp, format, palette = bitmap.open( "kodim23.bmp" )
-local viewport             = bitmap.make_viewport( bmp, 0, 0, 42, 42 )
+local viewport             = bitmap.make_viewport( bmp, 1, 1, 42, 42 )
 
-viewport:save( "kodim23_vp.bmp", format, palette )
+bitmap.save( viewport, "kodim23_vp.bmp", format, palette )
 ```
 
 You can find these and other examples in the [tests](/test).
