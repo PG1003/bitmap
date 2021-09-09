@@ -35,6 +35,9 @@ local string_unpack    = string.unpack
 local coroutine_resume = coroutine.resume
 local coroutine_yield  = coroutine.yield
 
+local color_to_Lab    = color.to_Lab
+local color_luminance = color.luminance
+local color_delta_e94 = color.delta_e94
 
 --
 -- Local helper functions
@@ -286,17 +289,14 @@ local function _save( bmp, file, format, palette )
         if bits_per_pixel <= 8 then
             assert( palette, "Format '" .. format .. "' requires a palette" )
             
-            local to_Lab = color.to_Lab
-            
             local fast_lookup = {}
             local Lab_lookup  = {}
             for i = 1, #palette do
                 local value          = palette[ i ]
                 fast_lookup[ value ] = i - 1
-                Lab_lookup[ i ]      = { to_Lab( value ) }
+                Lab_lookup[ i ]      = { color_to_Lab( value ) }
             end
             
-            local delta_e94      = color.delta_e94
             local shift_start    = 32 - bits_per_pixel
             for y = y_start, y_stop, y_step do
                 local row   = bmp[ y ]
@@ -312,12 +312,12 @@ local function _save( bmp, file, format, palette )
                     local color_index = fast_lookup[ value ]
                     if not color_index then
                         -- Find index in color table of the color closesed to 'value'
-                        local L1, a1, b1       = to_Lab( value )
+                        local L1, a1, b1       = color_to_Lab( value )
                         local nearest_distance = 100   -- Maximum distance
                         color_index            = 1
                         for i = 1, #palette do
                             local Lab      = Lab_lookup[ i ]
-                            local distance = delta_e94( L1, a1, b1, Lab[ 1 ], Lab[ 2 ], Lab[ 3 ] )
+                            local distance = color_delta_e94( L1, a1, b1, Lab[ 1 ], Lab[ 2 ], Lab[ 3 ] )
                             if distance < nearest_distance then
                                 color_index      = i
                                 nearest_distance = distance
@@ -514,7 +514,7 @@ local function _read_dib( f )
         end
 
         local red_mask, green_mask, blue_mask, alpha_mask = string_unpack( "I4I4I4I4", f:read( 16 ) )
-        -- Skip remainig fields of DIB v4 header; this library has no support for colorspaces
+        -- Skip remaining fields of DIB v4 header; this library has no support for colorspaces
         
         return dib_size, width, height, bits_per_pixel, compression, number_palette_colors, red_mask, green_mask, blue_mask, alpha_mask
         
@@ -828,11 +828,65 @@ local function _psnr( reference, other )
     return psnr_total, psnr_r, psnr_g, psnr_b
 end
 
+local function _luminance_lookup_index( self, key )
+   local luminance = color_luminance( key )
+   rawset( self, key, luminance )
+   
+   return luminance
+end
+
+local function _dither_bw( bmp )
+    luminance_lookup = setmetatable( {}, { __index = _luminance_lookup_index } )
+    
+    local diffuse_0 = {}
+    local diffuse_1 = {}
+    
+    local width = bmp:width()
+    
+    for i = 1, width do
+        diffuse_1[ i ] = 0.0
+    end
+    
+    for _, row in ipairs( bmp ) do
+        diffuse_0, diffuse_1 = diffuse_1, diffuse_0
+        
+        -- Reset diffusion buffer.
+        -- For Floyd-Steinberg only the first item needs to be zero'd.
+        -- The remaining values are overwritten by the algoritm.
+        diffuse_1[ 1 ] = 0.0
+        
+        for i, value in ipairs( row ) do
+            local i_next = i + 1
+            local i_prev = i - 1
+            local L      = luminance_lookup[ value ] + diffuse_0[ i ]
+            
+            if L >= 50.0 then
+                L        = ( L - 100.0 ) / 16.0
+                row[ i ] = 0xFFFFFFFF
+            else
+                L        = L / 16.0
+                row[ i ] = 0xFF000000
+            end
+            
+            diffuse_1[ i ] = diffuse_1[ i ] + 5.0 * L
+            
+            if i_prev >= 1 then
+                diffuse_1[ i_prev ] = diffuse_1[ i_prev ] + 3.0 * L
+            end
+            if i_next <= width then
+                diffuse_0[ i_next ] = diffuse_0[ i_next ] + 7.0 * L
+                diffuse_1[ i_next ] = L
+            end
+        end
+    end    
+end
+
 
 local bitmap =
 {
     save          = _save,
     create        = _create,
+    dither_bw     = _dither_bw,
     open          = _open,
     make_viewport = _make_viewport,
     blit          = _blit,
