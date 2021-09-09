@@ -32,6 +32,9 @@ local math_cos     = math.cos
 local math_sin     = math.sin
 local math_atan    = math.atan
 local math_sqrt    = math.sqrt
+local math_exp     = math.exp
+local math_fmod    = math.fmod
+local math_rad     = math.rad
 local table_sort   = table.sort
 local table_remove = table.remove
 
@@ -333,6 +336,10 @@ end
 -- https://en.wikipedia.org/wiki/Color_difference
 -- http://www.brucelindbloom.com/index.html?ColorDifferenceCalc.html
 
+function color.delta_e76( _L1, _a1, _b1, _L2, _a2, _b2 )
+    return math_sqrt( ( _L2 - _L1 ) ^ 2.0 + ( _a2 - _a1 ) ^ 2.0 + ( _b2 - _b1 ) ^ 2.0 )
+end
+
 function color.delta_e94( _L1, _a1, _b1, _L2, _a2, _b2 )
     local C1 = math_sqrt( ( _a1 ^ 2.0 ) + ( _b1 ^ 2.0 ) )
     local C2 = math_sqrt( ( _a2 ^ 2.0 ) + ( _b2 ^ 2.0 ) )
@@ -345,6 +352,70 @@ function color.delta_e94( _L1, _a1, _b1, _L2, _a2, _b2 )
     dH = dH / ( 1.0 + ( 0.015 * C1 ) )
     
     return math_sqrt( dL ^ 2.0 + dC ^ 2.0 + dH ^ 2.0 )
+end
+
+local _6deg   = math_rad(   6.0 )
+local _25deg  = math_rad(  25.0 )
+local _30deg  = math_rad(  30.0 )
+local _60deg  = math_rad(  60.0 )
+local _63deg  = math_rad(  63.0 )
+local _275deg = math_rad( 275.0 )
+local _360deg = 2.0 * math_pi
+
+local function delta_e2000( _L1, _a1, _b1, _L2, _a2, _b2 )
+    local b1_2 = _b1 ^ 2.0
+    local b2_2 = _b2 ^ 2.0
+    local h_x  = ( math_sqrt( _a1 ^ 2.0 + b1_2 ) + math_sqrt( _a2 ^ 2.0 + b2_2 ) ) / 2.0
+    local h_y  = 1.0 + 0.5 * ( 1.0 - math_sqrt( h_x ^ 7.0 / ( h_x ^ 7.0 + 25.0 ^ 7.0 ) ) )
+
+    local h1_x = h_y * _a1
+    local C1   = math_sqrt( h1_x ^ 2.0 + b1_2 )
+    local h1   = math_fmod( math_atan( _b1, h1_x ), _360deg )
+    
+    local h2_x = h_y * _a2
+    local C2   = math_sqrt( h2_x ^ 2.0 + b2_2 )
+    local h2   = math_fmod( math_atan( _b2, h2_x ), _360deg )
+
+    local C1_C2_not_zero = ( C1 * C2 ) ~= 0.0
+    
+    local dH_ = h1 + h2
+    if C1_C2_not_zero then
+        if math_abs( h1 - h2 ) > math_pi then
+            dH_ = dH_ + ( dH_ < ( math_pi * 2.0 ) and _360deg or -_360deg )
+        end
+        dH_ = dH_ / 2.0
+    end
+    
+    local T = 1.0 - 0.17 * math_cos(       dH_ - _30deg )
+                  + 0.24 * math_cos( 2.0 * dH_          )
+                  + 0.32 * math_cos( 3.0 * dH_ + _6deg  )
+                  - 0.20 * math_cos( 4.0 * dH_ - _63deg )
+    
+    local L_   = ( _L1 + _L2 ) / 2.0
+    local Sl_x = ( L_ - 50.0 ) ^ 2.0
+    local Sl   = 1.0 + ( 0.015 * Sl_x ) / math_sqrt( 20.0 + Sl_x )
+    local C_   = ( C1 + C2 ) / 2.0
+    local Sc   = 1.0 + 0.045 * C_
+    local Sh   = 1.0 + 0.015 * C_ * T
+    
+    local dh = 0.0
+    if C1_C2_not_zero then
+        dh = h2 - h1
+        if math_abs( dh ) > math_pi then
+            dh = dh + ( h2 <= h1 and _360deg or -_360deg )
+        end
+    end
+    
+    local dL_Sl = ( _L2 - _L1 ) / Sl
+    local dC_Sc = ( C2 - C1 ) / Sc
+    local dH_Sh = 2.0 * math_sqrt( C1 * C2 ) * math_sin( dh / 2.0 ) / Sh
+    
+    local Rt_x = C_ ^ 7.0
+    local Rt_y = -2.0 * math_sqrt( Rt_x / ( Rt_x + 25.0 ^ 7.0 ) )
+    local Rt_z = math_sin( _60deg * math_exp( - ( ( dH_ - _275deg ) / _25deg ) ^ 2.0 ) )
+    local Rt   = Rt_y * Rt_z
+    
+    return math_sqrt( dL_Sl ^ 2.0 + dC_Sc ^ 2.0 + dH_Sh ^ 2.0 + Rt * dC_Sc * dH_Sh )
 end
 
 --

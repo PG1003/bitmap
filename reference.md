@@ -20,6 +20,7 @@
 
 [add](#add-left-right-)  
 [blue](#blue-color-)  
+[delta_e76](#delta_e76-l1-a1-b1-l2-a2-b2-)  
 [delta_e94](#delta_e94-l1-a1-b1-l2-a2-b2-)  
 [green](#green-color-)  
 [from_hcl](#from_hcl-h-c-l-)  
@@ -171,6 +172,12 @@ The resulting value of color components is clipped to 255.
 ### `blue( color )`
 
 Returns the blue component value from a color.
+
+### `delta_e76( L1, a1, b1, L2, a2, b2 )`
+
+Takes two colors in the Lab color model and calculates the distance between two colors using the CIE76 formula.
+The value '0.0' means both colors are same.
+This calculation is faster but less accurate than [delta_e94](#delta_e94-l1-a1-b1-l2-a2-b2-) function.  
 
 ### `delta_e94( L1, a1, b1, L2, a2, b2 )`
 

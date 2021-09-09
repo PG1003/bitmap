@@ -2,7 +2,6 @@ local color    = require( "bitmap.color")
 local palettes = require( "bitmap.palettes" )
 local test     = require( "test" )
 
-
 local tests = {}
 
 
@@ -123,23 +122,43 @@ end
     
 local _delta_e =
 {
-    { {  53.241,  80.092,   67.203 }, {  87.735, -86.183,   83.179 },  73.430543 }, -- 0xFF00FF00, 0xFFFF0000
-    { {  32.297,  79.188, -107.860 }, {  91.113, -48.088,  -14.131 },  74.765039 }, -- 0xFF0000FF, 0xFF00FFFF
-    { {  60.324,  98.234,  -60.825 }, {  97.139, -21.554,   94.478 },  80.421818 }, -- 0xFFFF00FF, 0xFFFFFF00
-    { {   0.000,   0.000,    0.000 }, { 100.000,   0.000,    0.000 }, 100.0      }, -- 0xFF000000, 0xFFFFFFFF
-    { {   0.000,   0.000,    0.000 }, {  32.297,  79.188, -107.860 }, 137.650337 }, -- 0xFF000000, 0xFF0000FF
-    { { 100.000,   0.000,    0.000 }, {  97.139, -21.554,   94.478 },  96.947680 }  -- 0xFFFFFFFF, 0xFFFFFF00
+    { {  53.241,  80.092,   67.203 }, {  87.735, -86.183,   83.179 }, 170.565073,  73.430543,  86.608162 }, -- 0xFF00FF00, 0xFFFF0000
+    { {  32.297,  79.188, -107.860 }, {  91.113, -48.088,  -14.131 }, 168.652387,  74.765039,  66.467012 }, -- 0xFF0000FF, 0xFF00FFFF
+    { {  60.324,  98.234,  -60.825 }, {  97.139, -21.554,   94.478 }, 199.558340,  80.421818,  92.808605 }, -- 0xFFFF00FF, 0xFFFFFF00
+    { {   0.000,   0.000,    0.000 }, { 100.000,   0.000,    0.000 }, 100.0,      100.0,      100.0      }, -- 0xFF000000, 0xFFFFFFFF
+    { {   0.000,   0.000,    0.000 }, {  32.297,  79.188, -107.860 }, 137.650337, 137.650337,  39.681704 }, -- 0xFF000000, 0xFF0000FF
+    { { 100.000,   0.000,    0.000 }, {  97.139, -21.554,   94.478 },  96.947680,  96.947680,  30.516068 }  -- 0xFFFFFFFF, 0xFFFFFF00
 }
-    
+
+function tests.delta_e76()
+    for i = 1, #_delta_e do
+        local combination = _delta_e[ i ]
+        local L1, a1, b1  = table.unpack( combination[ 1 ] )
+        local L2, a2, b2  = table.unpack( combination[ 2 ] )
+        local e76         = combination[ 3 ]
+        test.is_same_float( color.delta_e76( L1, a1, b1, L2, a2, b2 ), e76, 0.0000005 )
+    end
+end
+
 function tests.delta_e94()
     for i = 1, #_delta_e do
         local combination = _delta_e[ i ]
         local L1, a1, b1  = table.unpack( combination[ 1 ] )
         local L2, a2, b2  = table.unpack( combination[ 2 ] )
-        local e94         = combination[ 3 ]
+        local e94         = combination[ 4 ]
         test.is_same_float( color.delta_e94( L1, a1, b1, L2, a2, b2 ), e94, 0.0000005 )
     end
 end
 
+--function tests.delta_e2000()
+--    for i = 1, #_delta_e do
+--        local combination = _delta_e[ i ]
+--        local L1, a1, b1  = table.unpack( combination[ 1 ] )
+--        local L2, a2, b2  = table.unpack( combination[ 2 ] )
+--        local e2000       = combination[ 5 ]
+--        f = color.delta_e2000( L1, a1, b1, L2, a2, b2 )
+--        test.is_same_float( f, e2000, 0.0000005 )
+--    end
+--end
 
 return tests
