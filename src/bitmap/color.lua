@@ -92,7 +92,6 @@ end
 -- See: http://www.easyrgb.com/index.php?X=MATH
 --      http://www.chilliant.com/rgb2hsv.html
 --      https://www.rapidtables.com/convert/color/index.html
---      http://www.brucelindbloom.com/index.html?ColorDifferenceCalc.html
 --
 
 function color.to_hsv( color )
@@ -270,7 +269,7 @@ local function _from_Lab( _L, _a, _b )
     if ( y ^ 3.0 ) > 0.008856 then y = y ^ 3.0 else y = ( y - 16.0 / 116.0 ) / 7.787 end
     if ( z ^ 3.0 ) > 0.008856 then z = z ^ 3.0 else z = ( z - 16.0 / 116.0 ) / 7.787 end
 
-    -- Observer= 2°, Illuminant= D65
+    -- Observer = 2°, Illuminant = D65
     local r = x *  3.080093082 + y * -1.5372 + z * -0.542890638
     local g = x * -0.920910383 + y *  1.8758 + z *  0.045186445
     local b = x *  0.052941179 + y * -0.204  + z *  1.15089331
@@ -306,9 +305,33 @@ function color.from_hcl( h, c, l )
     return _from_Lab( l, a, b )
 end
 
+function color.luminance( color )
+    local r = ( ( color & 0x00FF0000 ) >> 16 ) / 255.0
+    local g = ( ( color & 0x0000FF00 ) >>  8 ) / 255.0
+    local b =   ( color & 0x000000FF )         / 255.0
+
+    if r > 0.04045 then r = ( ( r + 0.055 ) / 1.055 ) ^ 2.4 else r = r / 12.92 end
+    if g > 0.04045 then g = ( ( g + 0.055 ) / 1.055 ) ^ 2.4 else g = g / 12.92 end
+    if b > 0.04045 then b = ( ( b + 0.055 ) / 1.055 ) ^ 2.4 else b = b / 12.92 end
+    
+    -- Observer = 2°, Illuminant = D65
+    local y = ( r * 21.26 + g * 71.52 + b *  7.22 ) / 100.000
+
+    if y > 0.00885645167904 then
+        y = y ^ ( 1.0 / 3.0 )
+    else
+        y = ( 7.78703703704 * y ) + ( 16.0 / 116.0 )
+    end
+
+    return ( 116.0 * y ) - 16.0
+end
+
 --
 -- Color comparison functions
 --
+
+-- https://en.wikipedia.org/wiki/Color_difference
+-- http://www.brucelindbloom.com/index.html?ColorDifferenceCalc.html
 
 function color.delta_e94( _L1, _a1, _b1, _L2, _a2, _b2 )
     local C1 = math_sqrt( ( _a1 ^ 2.0 ) + ( _b1 ^ 2.0 ) )
