@@ -453,6 +453,14 @@ local function _height( self )
     return #self
 end
 
+local function _get( self, x, y )
+    return self[ y ][ x ]
+end
+
+local function _set( self, x, y, color )
+    self[ y ][ x ] = color
+end
+
 local function _mask_new_pixels( self, key, value )
     if type( key ) ~= "number" then
         self[ key ] = value
@@ -476,6 +484,8 @@ local _bmp_mt =
             width     = _width,
             height    = _height,
             pixels    = _pixels,
+            get       = _get,
+            set       = _set
         },
 
     __newindex = _mask_new_pixels
@@ -886,12 +896,12 @@ local bitmap =
 {
     save          = _save,
     create        = _create,
-    dither_bw     = _dither_bw,
     open          = _open,
     make_viewport = _make_viewport,
     blit          = _blit,
     diff          = _diff,
-    psnr          = _psnr
+    psnr          = _psnr,
+    dither_bw     = _dither_bw
 }
 
 return bitmap

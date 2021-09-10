@@ -12,11 +12,13 @@
 [open](#open-file-)  
 [psnr](#psnr-reference-other-)  
 [save](#save-bmp-file-format--palette-)  
+[bitmap:get](#bitmapget-x-y-)  
 [bitmap:height](#bitmapheight)  
 [bitmap:pixels](#bitmappixels)  
-[bitmap:width](#bitmapwidth)  
+[bitmap:set](bitmapset-x-y-color-)  
+[bitmap:width](#bitmapwidth)
   
-### color
+### bitmap.color
 
 [add](#add-left-right-)  
 [blue](#blue-color-)  
@@ -38,7 +40,7 @@
 [to_Lab](#to_lab-color-)  
 [to_rgba](#to_rgba-color-)
   
-### palettes
+### bitmap.palettes
 
 [palette_2](#palette_2)  
 [palette_16](#palette_16)  
@@ -48,6 +50,7 @@
 
 A bitmap follows the same structure as a bitmap file which is a two dimentional table with rows of pixels.
 This means when accessing a pixel, first the row is selected, then the column, e.g. `pixel = bitmap[ y ][ x ]`.
+You can also use the [bitmap:get](#bitmapget-x-y-) and [bitmap:set](bitmapset-x-y-color-) functions which are more intuitive but slightly slower.
 
 The origin of the bitmap is placed at lower left corner.
 This choise was made to simplify the visualization of datapoints.
@@ -101,6 +104,11 @@ The `format` is a string folowing a pattern as described [here](#Format-patterns
 `palette` is required if `format` is a pattern of an indexed bitmap type.
 A `palette` is a table with maximum of 256 that has for each index a color.
 
+### `bitmap:get( x, y )`
+
+Returns the color value of the pixel at the given `x` and `y` of the bitmap.  
+Using this function may be slower than accessing the pixels directly on the table structure but is more intuitive.
+
 ### `bitmap:height()`
 
 Returns the bitmap's height in pixels.
@@ -109,6 +117,11 @@ Returns the bitmap's height in pixels.
 
 Returns a proxy table that transforms the bitmap to an one-dimentional array.
 This table can be used to iterate through all the pixels of a bitmap, for example with `ipairs`.
+
+### `bitmap:set( x, y, color )`
+
+Sets the color value `color` on the given `x` and `y` of the bitmap.  
+Using this function may be slower than modifying the pixels directly on the table structure but is more intuitive.
 
 ### `bitmap:width()`
 
@@ -152,7 +165,7 @@ The red, green and blue components are required, alpha is optional.
 The minimum size of a pixel for bitfield type formats is 16 bits.
 The pixel size is 32 bits for formats with a total bit count of more than 16 bits.
 
-## color
+## bitmap.color
 
 A color is a 32 bit value that represents an RGB color model with an alpha.
 Each color component is an 8 bit value ranging from 0 up to 255 and is packed as in the table below.
@@ -176,8 +189,8 @@ Returns the blue component value from a color.
 ### `delta_e76( L1, a1, b1, L2, a2, b2 )`
 
 Takes two colors in the Lab color model and calculates the distance between two colors using the CIE76 formula.
-The value '0.0' means both colors are same.
-This calculation is faster but less accurate than [delta_e94](#delta_e94-l1-a1-b1-l2-a2-b2-) function.  
+The value '0.0' means both colors are same.  
+This calculation is faster but less accurate than the [delta_e94](#delta_e94-l1-a1-b1-l2-a2-b2-) function.
 
 ### `delta_e94( L1, a1, b1, L2, a2, b2 )`
 
@@ -251,7 +264,7 @@ Returns the representation of `color` in CIE Lab color model values.
 
 Returns the red, green, blue and alpha color components of `color`.
 
-## palettes
+## bitmap.palettes
 
 ### `palette_2`
 
