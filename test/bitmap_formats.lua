@@ -37,7 +37,7 @@ function tests.test_indexed()
     local formats = { [ 1 ] = "RGB1", [ 4 ] ="RGB4", [ 8 ] = "RGB8" }
     for n_bits, format in pairs( formats ) do
         local n_colors = math.tointeger( 2 ^ n_bits )
-        local palette  = color.quantize( kodim23:pixels(), n_colors )
+        local palette  = color.quantize( bitmap.pixels( kodim23 ), n_colors )
         
         local file_1 = test.get_results_file( "kodim23_%s_%d.bmp", format, 1 )
         bitmap.save( kodim23, file_1, format, palette )

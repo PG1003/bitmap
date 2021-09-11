@@ -29,7 +29,7 @@ local bitmap = require( "bitmap" )
 local color  = require( "bitmap.color" )
 
 local bmp     = bitmap.open( "kodim23.bmp" )
-local palette = color.quantize( bmp:pixels(), 256 )
+local palette = color.quantize( bitmap.pixels( bmp ), 256 )
 
 bitmap.save( bmp, "kodim23_8bit.bmp", "RGB8", palette )
 ```

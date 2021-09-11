@@ -83,7 +83,7 @@ end
 
 function test.iterate_pixels()
     local pixel_count = 0
-    local pixels = reference:pixels()
+    local pixels      = bmp.pixels( reference )
     
     test.is_same( #pixels, reference:width() * reference:height() )
     

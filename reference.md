@@ -11,10 +11,10 @@
 [make_viewport](#make_viewport-src_bmp-x-y-width-height-)  
 [open](#open-file-)  
 [psnr](#psnr-reference-other-)  
+[pixels](#pixels-bmp-)  
 [save](#save-bmp-file-format--palette-)  
 [bitmap:get](#bitmapget-x-y-)  
 [bitmap:height](#bitmapheight)  
-[bitmap:pixels](#bitmappixels)  
 [bitmap:set](bitmapset-x-y-color-)  
 [bitmap:width](#bitmapwidth)
   
@@ -91,6 +91,11 @@ If the opened file was an indexed bitmap, a third value is returned containing t
 The format is a string with a pattern that discribes what kind of bitmap format was opened.
 See [Format patterns](#Format-patterns) about how a pattern is encoded.
 
+### `pixels( bmp )`
+
+Returns a proxy table that transforms the bitmap or a bitmap view to an one-dimentional table.
+This table can be used to iterate through all the pixels of a bitmap, for example with `ipairs`.
+
 ### `psnr( reference, other )`
 
 Calculates the Peak Signal-to-Noise Ratio between the bitmaps `reference` and `other`.
@@ -112,11 +117,6 @@ Using this function may be slower than accessing the pixels directly on the tabl
 ### `bitmap:height()`
 
 Returns the bitmap's height in pixels.
-
-### `bitmap:pixels()`
-
-Returns a proxy table that transforms the bitmap to an one-dimentional array.
-This table can be used to iterate through all the pixels of a bitmap, for example with `ipairs`.
 
 ### `bitmap:set( x, y, color )`
 

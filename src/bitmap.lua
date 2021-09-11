@@ -429,13 +429,13 @@ local function _pixels_index( self, index )
 end
     
 
-local function _pixels( self )
+local function _pixels( bmp )
     return setmetatable(
         {
-            bmp    = self,
-            width  = self:width(),
-            height = self:height(),
-            len    = self:width() * self:height()
+            bmp    = bmp,
+            width  = bmp:width(),
+            height = bmp:height(),
+            len    = bmp:width() * bmp:height()
         },
         {
             __metatable = false,
@@ -483,7 +483,6 @@ local _bmp_mt =
         {
             width     = _width,
             height    = _height,
-            pixels    = _pixels,
             get       = _get,
             set       = _set
         },
@@ -895,6 +894,7 @@ end
 local bitmap =
 {
     save          = _save,
+    pixels        = _pixels,
     create        = _create,
     open          = _open,
     make_viewport = _make_viewport,
