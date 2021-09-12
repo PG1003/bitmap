@@ -34,7 +34,6 @@ local math_atan    = math.atan
 local math_sqrt    = math.sqrt
 local math_exp     = math.exp
 local math_fmod    = math.fmod
-local math_deg     = math.deg
 local math_rad     = math.rad
 local table_sort   = table.sort
 local table_remove = table.remove
@@ -290,15 +289,15 @@ end
 local function _to_hcl( color )
     local L, a, b = _to_Lab( color )
     local c       = math_sqrt( a ^ 2.0 + b ^ 2.0 )
-    local h       = math_deg( math_atan( b, a ) )
+    local h       = math_atan( b, a )
     
-    h = h > 0.0 and h or h + 360.0
+    h = ( h > 0.0 and h or 360.0 - math_abs( h ) ) * ( 180.0 / math_pi )
     
     return h, c, L
 end
 
 local function _from_hcl( h, c, l )
-    local h_rad = math_rad( h )
+    local h_rad = math_pi * h / 180.0
     local a     = math_cos( h_rad ) * c
     local b     = math_sin( h_rad ) * c
     
@@ -342,7 +341,8 @@ local function _delta_e94( _L1, _a1, _b1, _L2, _a2, _b2 )
     local C2 = math_sqrt( ( _a2 ^ 2.0 ) + ( _b2 ^ 2.0 ) )
     local dC = C2 - C1
     local dL = _L2 - _L1
-    local dH = math_sqrt( math_abs( ( _a1 - _a2 ) ^ 2.0 + ( _b1 - _b2 ) ^ 2.0 - ( dC ^ 2.0 ) ) )
+    local dE = math_sqrt( ( _L1 - _L2 ) ^ 2.0 + ( _a1 - _a2 ) ^ 2.0 + ( _b1 - _b2 ) ^ 2.0 )    
+    local dH = math_sqrt( ( dE ^ 2.0 ) - ( dL ^ 2.0 ) - ( dC ^ 2.0 ) )
     
     dC = dC / ( 1.0 + ( 0.045 * C1 ) )
     dH = dH / ( 1.0 + ( 0.015 * C1 ) )
