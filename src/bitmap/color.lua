@@ -342,8 +342,7 @@ local function _delta_e94( _L1, _a1, _b1, _L2, _a2, _b2 )
     local C2 = math_sqrt( ( _a2 ^ 2.0 ) + ( _b2 ^ 2.0 ) )
     local dC = C2 - C1
     local dL = _L2 - _L1
-    local dE = math_sqrt( ( _L1 - _L2 ) ^ 2.0 + ( _a1 - _a2 ) ^ 2.0 + ( _b1 - _b2 ) ^ 2.0 )    
-    local dH = math_sqrt( ( dE ^ 2.0 ) - ( dL ^ 2.0 ) - ( dC ^ 2.0 ) )
+    local dH = math_sqrt( math_abs( ( _a1 - _a2 ) ^ 2.0 + ( _b1 - _b2 ) ^ 2.0 - ( dC ^ 2.0 ) ) )
     
     dC = dC / ( 1.0 + ( 0.045 * C1 ) )
     dH = dH / ( 1.0 + ( 0.015 * C1 ) )
