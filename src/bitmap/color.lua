@@ -34,6 +34,7 @@ local math_atan    = math.atan
 local math_sqrt    = math.sqrt
 local math_exp     = math.exp
 local math_fmod    = math.fmod
+local math_deg     = math.deg
 local math_rad     = math.rad
 local table_sort   = table.sort
 local table_remove = table.remove
@@ -289,15 +290,15 @@ end
 local function _to_hcl( color )
     local L, a, b = _to_Lab( color )
     local c       = math_sqrt( a ^ 2.0 + b ^ 2.0 )
-    local h       = math_atan( b, a )
+    local h       = math_deg( math_atan( b, a ) )
     
-    h = ( h > 0.0 and h or 360.0 - math_abs( h ) ) * ( 180.0 / math_pi )
+    h = h > 0.0 and h or h + 360.0
     
     return h, c, L
 end
 
 local function _from_hcl( h, c, l )
-    local h_rad = math_pi * h / 180.0
+    local h_rad = math_rad( h )
     local a     = math_cos( h_rad ) * c
     local b     = math_sin( h_rad ) * c
     
