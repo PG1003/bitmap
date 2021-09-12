@@ -18,8 +18,7 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-
-local palette = {}
+local color = require( "bitmap.color" )
 
 
 local _palette_2 =
@@ -97,8 +96,68 @@ local function _make_read_only( t )
         } )
 end
 
-palette.palette_2   = _make_read_only( _palette_2 )
-palette.palette_16  = _make_read_only( _palette_16 )
-palette.palette_256 = _make_read_only( _palette_256 )
+local function _add_color( palette, color, count )
+    assert( type( palette ) == "table" )
+    assert( math.type( color ) == "integer" )
+    assert( not count or math.type( count ) == "integer" and count > 0 and count < 0x10000 )
+    
+    for n = 1, count or 1 do
+        palette[ #palette + 1 ] = color
+    end
+end
+
+local _gradient_methods =
+{
+    RGB = { color.to_rgba, color.from_rgba },
+    HSL = { color.to_hsl, color.from_hsl },
+    HSV = { color.to_hsv, color.from_hsv },
+    HCL = { color.to_hcl, color.from_hcl }
+}
+
+local function _add_gradient( palette, from_color, to_color, count, method )
+    assert( type( palette ) == "table" )
+    assert( not from_color or math.type( from_color ) == "integer" )
+    assert( math.type( to_color ) == "integer" )
+    assert( math.type( count ) == "integer" and count < 0x10000 )
+    
+    local conversion     = assert( _gradient_methods[ string.upper( method or "RGB" ) ] )
+    local color_to_pqr   = conversion[ 1 ]
+    local color_from_pqr = conversion[ 2 ]
+    
+    if from_color then
+        assert( count > 1 )
+        palette[ #palette + 1 ] = from_color
+    else
+        assert( #palette > 0 )
+        from_color = palette[ #palette ];
+        assert( math.type( from_color ) == "integer" )
+    end
+    
+    local from_p, from_q, from_r = color_to_pqr( from_color )
+    local to_p,   to_q,   to_r   = color_to_pqr( to_color )
+    
+    local p_step_size = ( to_p - from_p ) / count
+    local q_step_size = ( to_q - from_q ) / count
+    local r_step_size = ( to_r - from_r ) / count
+    
+    for step = 1, count - 1 do
+        local p                 = from_p + p_step_size * step
+        local q                 = from_q + q_step_size * step
+        local r                 = from_r + r_step_size * step
+        palette[ #palette + 1 ] = color_from_pqr( p, q, r )
+    end
+
+    -- Insert final color outside the loop to finish with to_color without any rounding errors
+    palette[ #palette + 1 ] = to_color
+end
+
+local palette =
+{
+    palette_2    = _make_read_only( _palette_2 ),
+    palette_16   = _make_read_only( _palette_16 ),
+    palette_256  = _make_read_only( _palette_256 ),
+    add_color    = _add_color,
+    add_gradient = _add_gradient
+}
 
 return palette

@@ -42,6 +42,8 @@
   
 ### bitmap.palettes
 
+[add_color](#add_color-palette-color-count-)  
+[add_gradient](#add_gradient-palette-from_color-to_color-count-method-)  
 [palette_2](#palette_2)  
 [palette_16](#palette_16)  
 [palette_256](#palette_256)
@@ -265,6 +267,21 @@ Returns the representation of `color` in CIE Lab color model values.
 Returns the red, green, blue and alpha color components of `color`.
 
 ## bitmap.palettes
+
+### `add_color( palette, color [, count] )`
+
+Appends a `count` number of `color` values to `palette`.
+`count` must be at least 1 and less then 65536.
+When `count` is ommited a default of `1` is used.
+
+### `add_gradient( palette, from_color, to_color, count [, method] )`
+
+Appends a gradient from `from_color` to `to_color` with `count` number of colors to `palette`.
+If `from_color` is a false-like type (`nil` or `false`) then the value of `palette[ #palette ]` will be used to interpolate from but is not added (again) to `palette`.
+`count` must be less then 65536 and at least be `2` when `from_color` is provided or `1` when `from_color` is a false-like type.  
+The optional `method` argument is a string that defines colorspace in which the linear interpolation between `from_color` and `to_color` is calculated.
+Valid values are `"RGB"`, `"HSL"`, `"HSV"` and `"HCL"`.
+The RGB colorspace is default method.
 
 ### `palette_2`
 
