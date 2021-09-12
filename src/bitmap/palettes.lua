@@ -127,6 +127,7 @@ local function _add_gradient( palette, from_color, to_color, count, method )
     if from_color then
         assert( count > 1 )
         palette[ #palette + 1 ] = from_color
+        count                   = count - 1
     else
         assert( #palette > 0 )
         from_color = palette[ #palette ];
