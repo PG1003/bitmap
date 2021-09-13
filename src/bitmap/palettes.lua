@@ -165,11 +165,6 @@ local function _add_gradient( palette, from_color, to_color, count, method )
     local q_step_size = q_diff( from_q, to_q ) / count
     local r_step_size = r_diff( from_r, to_r ) / count
     
-    print( from_p, from_q, from_r )
-    print( to_p,   to_q,   to_r )
-    print( p_diff( from_p, to_p ), q_diff( from_p, to_p ), r_diff( from_p, to_p ) )
-    print( p_step_size, q_step_size, r_step_size )
-    
     for step = 1, count - 1 do
         local p                 = p_transform( from_p, p_step_size, step )
         local q                 = q_transform( from_q, q_step_size, step )
