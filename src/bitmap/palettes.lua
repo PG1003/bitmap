@@ -106,12 +106,30 @@ local function _add_color( palette, color, count )
     end
 end
 
+local function _linear_diff( l, r )
+    return r - l
+end
+
+local function _hue_diff( l, r )
+    local diff = r - l
+    return math.abs( diff ) <= 0.5 and diff or -1.0 + diff
+end
+
+local function _linear_transform( from, step_size, step )
+    return from + step_size * step
+end
+
+local function _hue_transform( from, step_size, step )
+    local value = from + step_size * step
+    return value >= 0.0 and value or 1.0 + value
+end
+
 local _gradient_methods =
 {
-    RGB = { color.to_rgba, color.from_rgba },
-    HSL = { color.to_hsl, color.from_hsl },
-    HSV = { color.to_hsv, color.from_hsv },
-    HCL = { color.to_hcl, color.from_hcl }
+    RGB = { color.to_rgba, color.from_rgba, _linear_diff, _linear_diff, _linear_diff, _linear_transform, _linear_transform, _linear_transform },
+    HSL = { color.to_hsl,  color.from_hsl,  _hue_diff,    _linear_diff, _linear_diff, _hue_transform,    _linear_transform, _linear_transform },
+    HSV = { color.to_hsv,  color.from_hsv,  _hue_diff,    _linear_diff, _linear_diff, _hue_transform,    _linear_transform, _linear_transform },
+    LAB = { color.to_Lab,  color.from_Lab,  _linear_diff, _linear_diff, _linear_diff, _linear_transform, _linear_transform, _linear_transform }
 }
 
 local function _add_gradient( palette, from_color, to_color, count, method )
@@ -123,6 +141,12 @@ local function _add_gradient( palette, from_color, to_color, count, method )
     local conversion     = assert( _gradient_methods[ string.upper( method or "RGB" ) ] )
     local color_to_pqr   = conversion[ 1 ]
     local color_from_pqr = conversion[ 2 ]
+    local p_diff         = conversion[ 3 ]
+    local q_diff         = conversion[ 4 ]
+    local r_diff         = conversion[ 5 ]
+    local p_transform    = conversion[ 6 ]
+    local q_transform    = conversion[ 7 ]
+    local r_transform    = conversion[ 8 ]
     
     if from_color then
         assert( count > 1 )
@@ -137,14 +161,19 @@ local function _add_gradient( palette, from_color, to_color, count, method )
     local from_p, from_q, from_r = color_to_pqr( from_color )
     local to_p,   to_q,   to_r   = color_to_pqr( to_color )
     
-    local p_step_size = ( to_p - from_p ) / count
-    local q_step_size = ( to_q - from_q ) / count
-    local r_step_size = ( to_r - from_r ) / count
+    local p_step_size = p_diff( from_p, to_p ) / count
+    local q_step_size = q_diff( from_q, to_q ) / count
+    local r_step_size = r_diff( from_r, to_r ) / count
+    
+    print( from_p, from_q, from_r )
+    print( to_p,   to_q,   to_r )
+    print( p_diff( from_p, to_p ), q_diff( from_p, to_p ), r_diff( from_p, to_p ) )
+    print( p_step_size, q_step_size, r_step_size )
     
     for step = 1, count - 1 do
-        local p                 = from_p + p_step_size * step
-        local q                 = from_q + q_step_size * step
-        local r                 = from_r + r_step_size * step
+        local p                 = p_transform( from_p, p_step_size, step )
+        local q                 = q_transform( from_q, q_step_size, step )
+        local r                 = r_transform( from_r, r_step_size, step )
         palette[ #palette + 1 ] = color_from_pqr( p, q, r )
     end
 
