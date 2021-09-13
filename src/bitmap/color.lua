@@ -34,7 +34,6 @@ local math_atan    = math.atan
 local math_sqrt    = math.sqrt
 local math_exp     = math.exp
 local math_fmod    = math.fmod
-local math_deg     = math.deg
 local math_rad     = math.rad
 local table_sort   = table.sort
 local table_remove = table.remove
@@ -285,24 +284,6 @@ local function _from_Lab( _L, _a, _b )
     b = math_min( math_max( ( 0.5 + b * 255.0 ) // 1, 0 ), 255 )
     
     return r << 16 | g << 8 | b | 0xFF000000
-end
-
-local function _to_hcl( color )
-    local L, a, b = _to_Lab( color )
-    local c       = math_sqrt( a ^ 2.0 + b ^ 2.0 )
-    local h       = math_deg( math_atan( b, a ) )
-    
-    h = h > 0.0 and h or h + 360.0
-    
-    return h, c, L
-end
-
-local function _from_hcl( h, c, l )
-    local h_rad = math_rad( h )
-    local a     = math_cos( h_rad ) * c
-    local b     = math_sin( h_rad ) * c
-    
-    return _from_Lab( l, a, b )
 end
 
 local function _luminance( color )
@@ -618,8 +599,6 @@ local color =
     from_hsl    = _from_hsl,
     to_Lab      = _to_Lab,
     from_Lab    = _from_Lab,
-    to_hcl      = _to_hcl,
-    from_hcl    = _from_hcl,
     luminance   = _luminance,
     delta_e76   = _delta_e76,
     delta_e94   = _delta_e94,
