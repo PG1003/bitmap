@@ -81,6 +81,26 @@ function test.is_same_float( value_1, value_2, abs_tolerance )
         return false
     end
     return true
+end
+
+function test.is_less( value_1, value_2 )
+    _total_checks = _total_checks + 1
+    if value_1 >= value_2 then
+        _report_fail( "Not less; value 1: '%s', value 2: '%s'",
+                      tostring( value_1 ), tostring( value_2 ) )
+        return false
+    end
+    return true
+end
+
+function test.is_greater( value_1, value_2 )
+    _total_checks = _total_checks + 1
+    if value_1 <= value_2 then
+        _report_fail( "Not greater; value 1: '%s', value 2: '%s'",
+                      tostring( value_1 ), tostring( value_2 ) )
+        return false
+    end
+    return true
 end    
 
 function test.is_same_bitmap( bmp_1, bmp_2 )

@@ -136,6 +136,7 @@ local function _add_gradient( palette, from_color, to_color, count, method )
     assert( type( palette ) == "table" )
     assert( not from_color or math.type( from_color ) == "integer" )
     assert( math.type( to_color ) == "integer" )
+    assert( from_color ~= to_color )
     assert( math.type( count ) == "integer" and count < 0x10000 )
     
     local conversion     = assert( _gradient_methods[ string.upper( method or "RGB" ) ] )
