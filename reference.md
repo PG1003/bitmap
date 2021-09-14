@@ -40,8 +40,8 @@
   
 ### bitmap.palettes
 
-[add_color](#add_color-palette-color-count-)  
-[add_gradient](#add_gradient-palette-from_color-to_color-count-method-)  
+[add_color](#add_color-palette-color--count-)  
+[add_gradient](#add_gradient-palette-from_color-to_color-count--method-)  
 [palette_2](#palette_2)  
 [palette_16](#palette_16)  
 [palette_256](#palette_256)
