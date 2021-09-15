@@ -9,6 +9,7 @@ A pure Lua module to open, modify and save bitmap images.
   * 1, 4 and 8 bit indexed.
   * regular 16, 24 and 32 bit RGB.
   * bitfields, including alpha.
+* Creating heatmaps.
 * Additional color module providing the following features;
   * colorspace conversions back and forth between RGB and other formats like HSV, HSL and Lab.
   * color comparison with Delta E76 and Delta E94.

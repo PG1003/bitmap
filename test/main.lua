@@ -11,7 +11,8 @@ local available_test_modules =
     bitmap_formats = true,
     bitmap_utils   = true,
     color_utils    = true,
-    palettes_utils = true
+    palettes_utils = true,
+    heatmap_utils  = true
 }
 
 if arg[ 1 ] then
