@@ -273,8 +273,7 @@ local function _save( bmp, file, format, palette )
     -- Write color table
     if palette then
         assert( #palette <= ( 2 ^ bits_per_pixel ) )
-        for i = 1, #palette do
-            
+        for i = 1, #palette do            
             f:write( string_pack( "I4", palette[ i ] ) )
         end
     end
@@ -297,7 +296,7 @@ local function _save( bmp, file, format, palette )
                 Lab_lookup[ i ]      = { color_to_Lab( value ) }
             end
             
-            local shift_start    = 32 - bits_per_pixel
+            local shift_start = 32 - bits_per_pixel
             for y = y_start, y_stop, y_step do
                 local row   = bmp[ y ]
                 local shift = shift_start
@@ -844,6 +843,8 @@ local function _luminance_lookup_index( self, key )
    return luminance
 end
 
+-- https://tannerhelland.com/2012/12/28/dithering-eleven-algorithms-source-code.html
+-- https://shihn.ca/posts/2020/dithering/
 local function _dither_bw( bmp )
     luminance_lookup = setmetatable( {}, { __index = _luminance_lookup_index } )
     
