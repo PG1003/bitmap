@@ -41,14 +41,14 @@
 ### bitmap.heatmap
 
 [create](#create-width-height--init-)  
-[make_bitmap_view](make_bitmap_view-hm-cell_size_x-cell_size_y-palette-)  
-[make_heatmap_palette](make_heatmap_palette-min-max-palette--out_of_range_color-)
-[bitmap_view:decrease](bitmap_viewdecrease-x-y-value-)
-[bitmap_view:get](bitmap_viewget-x-y-)
-[bitmap_view:height](bitmap_viewheight)
-[bitmap_view:increase](bitmap_viewincrease-x-y-value-)
-[bitmap_view:set](bitmap_viewset-x-y-value-)
-[bitmap_view:width](bitmap_viewwidth)
+[make_bitmap_view](#make_bitmap_view-hm-cell_size_x-cell_size_y-palette-)  
+[make_heatmap_palette](#make_heatmap_palette-min-max-palette--out_of_range_color-)  
+[bitmap_view:decrease](#bitmap_viewdecrease-x-y-value-)  
+[bitmap_view:get](#bitmap_viewget-x-y-)  
+[bitmap_view:height](#bitmap_viewheight)  
+[bitmap_view:increase](#bitmap_viewincrease-x-y-value-)  
+[bitmap_view:set](#bitmap_viewset-x-y-value-)  
+[bitmap_view:width](#bitmap_viewwidth)
   
 ### bitmap.palettes
 
