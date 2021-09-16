@@ -276,11 +276,11 @@ Returns a new heatmap with `width` number of cells for X and `height` number of 
 `init` is an optional parameter which will be the initial value of the cells.
 The cells are initialized with `0.0` when init is not provided.
 
-### `make_bitmap_view( hm, cell_size_x, cell_size_y, palette )`
+### `make_bitmap_view( hm, cell_size_x, cell_size_y, hm_palette )`
 
 Creates a _read-only_ bitmap like view for the given heatmap `hm`.
 Each cell is given a width and height of resp. `cell_size_x` and `cell_size_y` pixels.  
-`palette` is a heatmap palette created by [bitmap.heatmap.make_heatmap_palette](make_heatmap_palette-min-max-palette--out_of_range_color-) that is used to translate the heatmap cell values to colors.
+`hm_palette` is a heatmap palette created by [make_heatmap_palette](#make_heatmap_palette-min-max-palette--out_of_range_color-) that is used to translate the heatmap cell values to colors.
 
 ### `make_heatmap_palette( min, max, palette [, out_of_range_color] )`
 
@@ -292,11 +292,11 @@ Default value for `out_of_range_color` is `0xFF000000`.
 
 The range is _including_ the `max` value.
 This means that `palette` must have one color more than you may expect when you use palettes containing a small number of colors e.g. when visualize catagories using a descrete palette.
-When we take for `min` and `max` the values 0 and 10 combined with a `palette` of 21 colors, then the 'bucket size' for each color is;  
+For example when the values 0 and 10 used for `min` and `max` combined with a `palette` of 21 colors, then the 'bucket size' for each color is;  
 `( max - min ) / ( #palette - 1 ) = ( 10 - 0 ) / ( 21 - 1 ) = 0.5`.  
 This results in a heatmap palette that has a larger effective range, in this case 10.5.
 
-You must also be aware that a heatmap palette can return an adjacent color because floating points numbers are not infinit accurate.
+You must also be aware when using floating point numbers that a heatmap palette may return an adjacent color because floating points numbers are not infinit accurate.
 This effect may be noticeable when using a descrete palette.
 
 ### `bitmap_view:decrease( x, y, value )`

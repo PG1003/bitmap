@@ -115,7 +115,7 @@ local _bitmap_view_mt =
     __newindex = _assert_read_only
 }
 
-local function _make_bitmap_view( hm, cell_size_x, cell_size_y, palette )
+local function _make_bitmap_view( hm, cell_size_x, cell_size_y, hm_palette )
     assert( math.type( cell_size_x ) == "integer" and cell_size_x > 0 )
     assert( math.type( cell_size_y ) == "integer" and cell_size_y > 0 )
     
@@ -134,7 +134,7 @@ local function _make_bitmap_view( hm, cell_size_x, cell_size_y, palette )
         local x_proxy_mt =
         {
             __metatable = false,
-            __index     = function( self, key ) return palette[ hm_y[ hm_x_mapping[ key ] ] ] end,
+            __index     = function( self, key ) return hm_palette[ hm_y[ hm_x_mapping[ key ] ] ] end,
             __newindex  = _assert_read_only,
             __len       = len_x 
         }
@@ -163,8 +163,8 @@ local function _make_heatmap_palette( min, max, palette, out_of_range_color )
         {
             __metatable = false,
             __index     =
-                function( self, value )
-                    local offset = ( value - min ) / bucket_size
+                function( self, key )
+                    local offset = ( key - min ) / bucket_size
                     local bucket = 1 + math_tointeger( offset // 1 )
                     return palette[ bucket ] or out_of_range_color
                 end,
