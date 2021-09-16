@@ -86,23 +86,28 @@ local function _decode_bitmap_format( format )
         bits_per_pixel = tonumber( bits_per_pixel )
         if bits_per_pixel == 1 or
            bits_per_pixel == 4 or
-           bits_per_pixel == 8 or
-           bits_per_pixel == 16 or
-           bits_per_pixel == 24 or
-           bits_per_pixel == 32 then
-            return "rgb", bits_per_pixel
+           bits_per_pixel == 8 then
+            return "indexed", bits_per_pixel
+        elseif bits_per_pixel == 16 then
+            return "rgb", 16, 0x7C00, 0x03E0, 0x001F
+        elseif bits_per_pixel == 24 then
+            return "rgb", 24, 0xFF0000, 0x00FF00, 0x0000FF
+        elseif bits_per_pixel == 32 then
+            return "rgb", 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000
+        else
+            assert( false, "Unrecognized format" )
         end
     end
 
     bits_per_pixel = 0
-    local r_mask
-    local g_mask
-    local b_mask
-    local a_mask
+    local r_mask = nil
+    local g_mask = nil
+    local b_mask = nil
+    local a_mask = nil
     
     do
-        local order, size = string.match( format, "^([RGBA]+)(%d+)$" )
-        assert( order and size, "Malformed format" )
+        local order, size = string.match( format, "^([RGBA]+)([1-8]+)$" )
+        assert( order and size, "Unrecognized format" )
         
         local it_order, s_order, color_order = order:gmatch( "." )
         local it_size, s_size, color_size    = size:gmatch( "." )
@@ -154,10 +159,10 @@ local function _decode_bitmap_format( format )
            assert( r_mask, "Mask for R field not defined" ),
            assert( g_mask, "Mask for G field not defined" ),
            assert( b_mask, "Mask for B field not defined" ),
-           a_mask or 0
+           a_mask
 end
 
-local function encode_bitmap_bitfields_format( bitfields )
+local function _encode_bitmap_bitfields_format( bitfields )
     table.sort( bitfields, function( l, r ) return l[ 1 ] > r[ 1 ] end )
     
     local order = {}
@@ -174,12 +179,15 @@ local function encode_bitmap_bitfields_format( bitfields )
     return table_concat( order ) .. table_concat( size )
 end
 
-local function encode_bitmap_format( compression, bits_per_pixel, r_mask, g_mask, b_mask, a_mask )
-    if compression == "rgb" then
+local function _encode_bitmap_format( compression, bits_per_pixel, r_mask, g_mask, b_mask, a_mask )
+    if compression == "indexed" then
         if bits_per_pixel == 1 or
            bits_per_pixel == 4 or
-           bits_per_pixel == 8 or
-           bits_per_pixel == 16 or
+           bits_per_pixel == 8 then
+            return string.format( "RGB%d", bits_per_pixel )
+        end
+    elseif compression == "rgb" then
+        if bits_per_pixel == 16 or
            bits_per_pixel == 24 or
            bits_per_pixel == 32 then
             return string.format( "RGB%d", bits_per_pixel )
@@ -187,12 +195,10 @@ local function encode_bitmap_format( compression, bits_per_pixel, r_mask, g_mask
     elseif compression == "bitfields" then
         local masks = { { r_mask, "R" }, { g_mask, "G" }, { b_mask, "B" } }
         if a_mask > 0 then
-            masks[ #masks + 1 ] ={ a_mask, "A" }
+            masks[ #masks + 1 ] = { a_mask, "A" }
         end
-        return encode_bitmap_bitfields_format( masks )
+        return _encode_bitmap_bitfields_format( masks )
     end
-    
-    error( "Unsupported bitmap format" )
 end
 
 --
@@ -220,7 +226,7 @@ local function _save( bmp, file, format, palette )
     
     -- Use dib v3 indexed bitmaps or v4 for larger pixel sizes
     -- The v4 header is larger and contains data which is not used by indexed bitmaps
-    local dib_version = compression == "rgb" and 3 or 4
+    local dib_version = compression == "bitfields" and 4 or 3
     
     -- Bitmap file header
     local bitmap_header_size = 14
@@ -242,7 +248,8 @@ local function _save( bmp, file, format, palette )
              width,
              height,
              1,                         -- Color planes, only 1 supported
-             bits_per_pixel, compression == "rgb" and 0 or compression == "bitfields" and 3,
+             bits_per_pixel,
+             compression == "indexed" and 0 or compression == "rgb"and 0 or compression == "bitfields" and 3,
              bitmap_size,
              7787,                      -- Horizontal resolution, Gimp uses 7787  pixels per meter
              7787,                      -- Vertical resolution
@@ -284,7 +291,7 @@ local function _save( bmp, file, format, palette )
     local y_start = height > 0 and 1 or height
     local y_stop  = height > 0 and height or 1
     local y_step  = height > 0 and 1 or -1
-    if compression == "rgb" then
+    if compression == "indexed" then
         if bits_per_pixel <= 8 then
             assert( palette, "Format '" .. format .. "' requires a palette" )
             
@@ -330,71 +337,24 @@ local function _save( bmp, file, format, palette )
                 end
                 f:write( string_pack( ">I4", chunk ) )
             end
-        elseif bits_per_pixel == 16 then
-            -- Pack as RGB555
-            for y = y_start, y_stop, y_step do
-                local row   = bmp[ y ]
-                local chunk = 0
-                for x = x_start, x_stop, x_step do
-                    local value = row[ x ]
-                    if ( x & 0x01 ) == 0x01 then
-                        local r  = ( value & 0x00F80000 ) >>  1
-                        local g1 = ( value & 0x00003800 ) << 18
-                        local g2 = ( value & 0x0000C000 ) <<  2
-                        local b  = ( value & 0x000000F8 ) << 21
-                        chunk    = g1 | b | r | g2
-                    else
-                        local r  = ( value & 0x00F80000 ) >> 17
-                        local g1 = ( value & 0x00003800 ) <<  2
-                        local g2 = ( value & 0x0000C000 ) >> 14
-                        local b  = ( value & 0x000000F8 ) <<  5
-                        chunk    = chunk | ( g1 | b | r | g2 )
-                        f:write( string_pack( ">I4", chunk ) )
-                        chunk    = 0
-                    end
-                end
-                f:write( string_pack( ">I4", chunk ) )
-            end
-        elseif bits_per_pixel == 24 then
-            -- Pack as RGB888
-            local padding_mod = ( width * 3 ) & 0x03
-            local padding     = padding_mod > 0 and string_pack( "I".. 4 - padding_mod, 0 ) or ""
-            for y = y_start, y_stop, y_step do
-                local row = bmp[ y ]
-                for x = x_start, x_stop, x_step do
-                    f:write( string_pack( "I3", row[ x ] & 0x00FFFFFF ) )
-                end
-                f:write( padding )
-            end
-        elseif bits_per_pixel == 32 then
-            -- Pack as ARGB8888 --> no conversion
-            for y = y_start, y_stop, y_step do
-                local row = bmp[ y ]
-                for x = x_start, x_stop, x_step do
-                    f:write( string_pack( "I4", row[ x ] & 0xFFFFFFFF ) )
-                end
-            end
         end
-    elseif compression == "bitfields" then
-        -- Only 16 or 32 bits are supported by bitfields
+    elseif compression == "rgb" or compression == "bitfields" then        
+        local red_shift   = _calc_shift( 0x00FF0000, red_mask )
+        local green_shift = _calc_shift( 0x0000FF00, green_mask )
+        local blue_shift  = _calc_shift( 0x000000FF, blue_mask )
+        local alpha_shift = 0
         
-        local r_shift = _calc_shift( 0x00FF0000, red_mask )
-        local g_shift = _calc_shift( 0x0000FF00, green_mask )
-        local b_shift = _calc_shift( 0x000000FF, blue_mask )
+        local red_pixel_mask   = red_mask   >> red_shift
+        local green_pixel_mask = green_mask >> green_shift
+        local blue_pixel_mask  = blue_mask  >> blue_shift
+        local alpha_pixel_mask = 0
         
-        local masks_shifts =
-        {
-            { red_mask   << -r_shift, r_shift },
-            { green_mask << -g_shift, g_shift },
-            { blue_mask  << -b_shift, b_shift }
-        }
-        
-        if alpha_mask > 0 then
-            local a_shift                     = _calc_shift( 0xFF000000, alpha_mask )
-            masks_shifts[ #masks_shifts + 1 ] = { alpha_mask << -a_shift, a_shift }
+        if alpha_mask and alpha_mask > 0 then
+            alpha_shift = _calc_shift( 0xFF000000, alpha_mask )
+            alpha_pixel_mask = alpha_mask >> alpha_shift
         end
         
-        local pixel_size   = assert( bits_per_pixel <= 16 and 2 or bits_per_pixel <= 32 and 4 )
+        local pixel_size   = assert( bits_per_pixel <= 16 and 2 or bits_per_pixel == 24 and 3 or bits_per_pixel <= 32 and 4 )
         local pack_pattern = string.format( "I%d", pixel_size )
         local padding_mod  = ( width * pixel_size ) & 0x03
         local padding      = padding_mod > 0 and string_pack( "I".. 4 - padding_mod, 0 ) or ""
@@ -402,12 +362,12 @@ local function _save( bmp, file, format, palette )
             local row = bmp[ y ]
             for x = x_start, x_stop, x_step do
                 local value = row[ x ]
-                local chunk = 0
-                for i = 1, #masks_shifts do
-                    local ms = masks_shifts[ i ]
-                    chunk    = chunk | ( value & ms[ 1 ] ) << ms[ 2 ]
-                end
-                f:write( string_pack( pack_pattern, chunk ) )
+                local red   = ( value & red_pixel_mask )   << red_shift
+                local green = ( value & green_pixel_mask ) << green_shift
+                local blue  = ( value & blue_pixel_mask )  << blue_shift
+                local alpha = alpha_mask and ( value & alpha_mask ) << alpha_shift or 0
+
+                f:write( string_pack( pack_pattern, red | green | blue | alpha ) )
             end
             f:write( padding )
         end
@@ -489,6 +449,17 @@ local _bmp_mt =
     __newindex = _mask_new_pixels
 }
 
+local function _compression_format_type( compression_type, bits_per_pixel )
+    if bits_per_pixel > 8 then
+        return assert( compression_type == 0 and "rgb" or       -- No alpha
+                       compression_type == 3 and "bitfields" or -- (alpha) bitfields only for 16 and 32 bit per pixel bitmaps
+                       compression_type == 6 and "bitfields",
+                       "Unsupported compression method" )
+    else
+        return assert( compression_type == 0 and "indexed", "Unsupported compression method" )
+    end
+end
+
 local function _read_dib( f )
    
     local dib_size = string_unpack( "I4", f:read( 4 ) )
@@ -503,12 +474,10 @@ local function _read_dib( f )
     else
         local width, height, color_planes, bits_per_pixel = string_unpack( "i4i4I2I2", f:read( 12 ) )
         assert( color_planes == 1 )    -- Only support for one plane
- 
-        local compression_type = string_unpack( "I4", f:read( 4 ) )
-        local compression      = assert( compression_type == 0 and "rgb" or       -- No alpha
-                                         compression_type == 3 and "bitfields" or -- (alpha) bitfields only for 16 and 32 bit per pixel bitmaps
-                                         compression_type == 6 and "bitfields",   -- Was BI_ALPHABITFIELDS, applications generally support aplha with bitfields
-                                         "Unsupported compression method" )
+        
+        local compression_type = string_unpack( "I4", f:read( 4 ) )        
+        local compression      = _compression_format_type( compression_type, bits_per_pixel )
+        
         -- Skip bitmap size
         -- Skip horizontal resolution
         -- Skip vertical resolution
@@ -517,8 +486,16 @@ local function _read_dib( f )
         -- Skip important color
         f:seek( "cur", 4 )
         
-        if version < 4 then
-            return dib_size, width, height, bits_per_pixel, compression, number_palette_colors
+        if compression ~= "bitfields" then
+            if bits_per_pixel <= 8 then
+                return dib_size, width, height, bits_per_pixel, compression, number_palette_colors
+            elseif bits_per_pixel == 16 then
+                return dib_size, width, height, bits_per_pixel, compression, number_palette_colors, 0x7C00, 0x03E0, 0x001F
+            elseif bits_per_pixel == 24 then
+                return dib_size, width, height, bits_per_pixel, compression, number_palette_colors, 0xFF000, 0x00FF00, 0x0000FF
+            elseif bits_per_pixel == 32 then
+                return dib_size, width, height, bits_per_pixel, compression, number_palette_colors, 0x00FF000, 0x0000FF00, 0x000000FF
+            end
         end
 
         local red_mask, green_mask, blue_mask, alpha_mask = string_unpack( "I4I4I4I4", f:read( 16 ) )
@@ -567,104 +544,50 @@ local function _open( file )
     assert( f:seek( "set", bitmap_offset ) == bitmap_offset )
     
     local palette = nil
-    if compression == "rgb" then
-        if bits_per_pixel <= 8 then
-            -- We have a color table...
-            palette                 = {}
-            local color_table_start = 14 + dib_size -- Bitmap dib is 14 bytes + size of dib
-            assert( f:seek( "set", color_table_start ) )
-            -- Fill table
-            local entries    = number_palette_colors == 0 and 2 ^ bits_per_pixel or number_palette_colors
-            local table_data = f:read( 4 * entries )
-            local table_pos  = 1
-            for index = 1, entries do
-                palette[ index ], table_pos = string_unpack( "<I4", table_data, table_pos )
-            end
-            
-            local mask           = 2 ^ bits_per_pixel - 1
-            local shift_start    = 32 - bits_per_pixel
-            for y = y_start, y_stop, y_step do
-                local row_data     = f:read( row_data_len )
-                local row_data_pos = 1
-                local row          = bmp[ y ]
-                local shift        = -1
-                local chunk        = 0
-                for x = x_start, x_stop, x_step do
-                    if shift < 0 then
-                        chunk, row_data_pos = string_unpack( ">I4", row_data, row_data_pos )
-                        shift               = shift_start
-                    end
-                    local value = ( chunk >> shift ) & mask
-                    row[ x ]    = assert( palette[ value + 1 ] )
-                    shift       = shift - bits_per_pixel
-                end
-                setmetatable( row, _row_pixel_mask_mt )
-            end
-        elseif bits_per_pixel == 16 then
-            -- Packed as RGB555
-            for y = y_start, y_stop, y_step do
-                local row_data     = f:read( row_data_len )
-                local row_data_pos = 1
-                local row          = bmp[ y ]
-                local x            = x_start
-                local value
-                for x = x_start, x_stop, x_step do
-                    value, row_data_pos = string_unpack( ">I2", row_data, row_data_pos )
-                    local r             = ( value & 0x0000007C ) << 17
-                    local g1            = ( value & 0x0000E000 ) >>  2
-                    local g2            = ( value & 0x00000003 ) << 14
-                    local b             = ( value & 0x00001F00 ) >>  5
-                    row[ x ]            = 0xFF000000 | r | g1 | g2 | b -- Force alpha to max
-                end
-                setmetatable( row, _row_pixel_mask_mt )
-            end
-        elseif bits_per_pixel == 24 then
-            -- Packed as RGB888
-            for y = y_start, y_stop, y_step do
-                local row_data     = f:read( row_data_len )
-                local row_data_pos = 1
-                local row          = bmp[ y ]
-                local value
-                for x = x_start, x_stop, x_step do
-                    value, row_data_pos = string_unpack( "I3", row_data, row_data_pos )
-                    row[ x ] = 0xFF000000 | value
-                end
-                setmetatable( row, _row_pixel_mask_mt )
-            end
-        elseif bits_per_pixel == 32 then
-            -- Packed as ARGB8888 --> no conversion
-            for y = y_start, y_stop, y_step do
-                local row_data     = f:read( row_data_len )
-                local row_data_pos = 1
-                local row          = bmp[ y ]
-                for x = x_start, x_stop, x_step do
-                    row[ x ], row_data_pos = string_unpack( "I4", row_data, row_data_pos )
-                end
-                setmetatable( row, _row_pixel_mask_mt )
-            end
-        else
-            error( "Unsupported uncompressed bitmap fromat" )
+    if compression == "indexed" then
+        -- We have a color table...
+        palette                 = {}
+        local color_table_start = 14 + dib_size -- Bitmap dib is 14 bytes + size of dib
+        assert( f:seek( "set", color_table_start ) )
+        -- Fill table
+        local entries    = number_palette_colors == 0 and 2 ^ bits_per_pixel or number_palette_colors
+        local table_data = f:read( 4 * entries )
+        local table_pos  = 1
+        for index = 1, entries do
+            palette[ index ], table_pos = string_unpack( "<I4", table_data, table_pos )
         end
-    elseif compression == "bitfields" then
-        -- Only 16 or 32 bits are supported by bitfields
-        local pixel_size     = assert( bits_per_pixel <= 16 and 2 or bits_per_pixel <= 32 and 4 )
-        local unpack_pattern = string.format( "I%d", pixel_size )
-                
-        -- Shifts and masks for transforming to RGBA8888
-        local masks_shifts =
-        {
-            { red_mask,   _calc_shift( red_mask,   0x00FF0000 ), 0x00FF0000 },
-            { green_mask, _calc_shift( green_mask, 0x0000FF00 ), 0x0000FF00 },
-            { blue_mask,  _calc_shift( blue_mask,  0x000000FF ), 0x000000FF }
-        }
         
-        if alpha_mask > 0 then
-            masks_shifts[ #masks_shifts + 1 ] =
-            {
-                alpha_mask,
-                _calc_shift( alpha_mask, 0xFF000000 ),
-                0xFF000000
-            }
+        local mask           = 2 ^ bits_per_pixel - 1
+        local shift_start    = 32 - bits_per_pixel
+        for y = y_start, y_stop, y_step do
+            local row_data     = f:read( row_data_len )
+            local row_data_pos = 1
+            local row          = bmp[ y ]
+            local shift        = -1
+            local chunk        = 0
+            for x = x_start, x_stop, x_step do
+                if shift < 0 then
+                    chunk, row_data_pos = string_unpack( ">I4", row_data, row_data_pos )
+                    shift               = shift_start
+                end
+                local value = ( chunk >> shift ) & mask
+                row[ x ]    = assert( palette[ value + 1 ] )
+                shift       = shift - bits_per_pixel
+            end
+            setmetatable( row, _row_pixel_mask_mt )
+        end
+    elseif compression == "rgb" or compression == "bitfields" then
+        -- Only 16 or 32 bits are supported by bitfields
+        local pixel_size     = assert( bits_per_pixel <= 16 and 2 or bits_per_pixel == 24 and 3 or bits_per_pixel <= 32 and 4 )
+        local unpack_pattern = string.format( "I%d", pixel_size )
+
+        local red_shift   = _calc_shift( red_mask,   0x00FF0000 )
+        local green_shift = _calc_shift( green_mask, 0x0000FF00 )
+        local blue_shift  = _calc_shift( blue_mask,  0x000000FF )
+        local alpha_shift = 0, 0
+        
+        if alpha_mask and alpha_mask > 0 then
+            alpha_shift = _calc_shift( alpha_mask, 0xFF000000 )
         end
         
         local unpack_format = string.format( "I%d", bits_per_pixel // 8 )
@@ -676,22 +599,21 @@ local function _open( file )
             for x = x_start, x_stop, x_step do
                 local value         = 0
                 chunk, row_data_pos = string_unpack( unpack_format, row_data, row_data_pos )
-                for i = 1, #masks_shifts do
-                    local ms    = masks_shifts[ i ]
-                    local color = ms[ 3 ] & ( chunk & ms[ 1 ] ) << ms[ 2 ]
-                    value       = value | color
-                end
-                row[ x ] = value
+                
+                local red   = ( chunk & red_mask )   << red_shift
+                local green = ( chunk & green_mask ) << green_shift
+                local blue  = ( chunk & blue_mask )  << blue_shift
+                local alpha = alpha_mask and ( chunk & alpha_mask ) << alpha_shift or 0xFF000000
+                
+                row[ x ] = red | green | blue | alpha
             end
                 setmetatable( row, _row_pixel_mask_mt )
         end
-    else
-        error( "Unsupported bitmap format" )
     end
     
     setmetatable( bmp, _bmp_mt )
     
-    local format = encode_bitmap_format( compression, bits_per_pixel, red_mask, green_mask, blue_mask, alpha_mask )
+    local format = _encode_bitmap_format( compression, bits_per_pixel, red_mask, green_mask, blue_mask, alpha_mask )
     
     return bmp, format, palette
 end
