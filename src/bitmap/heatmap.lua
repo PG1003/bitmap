@@ -134,7 +134,7 @@ local function _make_bitmap_view( hm, cell_size_x, cell_size_y, hm_palette )
         local x_proxy_mt =
         {
             __metatable = false,
-            __index     = function( self, key ) return hm_palette[ hm_y[ hm_x_mapping[ key ] ] ] end,
+            __index     = function( self, key ) return hm_palette( hm_y[ hm_x_mapping[ key ] ] ) end,
             __newindex  = _assert_read_only,
             __len       = len_x 
         }
@@ -158,18 +158,11 @@ local function _make_heatmap_palette( min, max, palette, out_of_range_color )
     local range       = max - min
     local bucket_size = range / ( #palette - 1 )
     
-    return setmetatable(
-        {},
-        {
-            __metatable = false,
-            __index     =
-                function( self, key )
-                    local offset = ( key - min ) / bucket_size
-                    local bucket = 1 + math_tointeger( offset // 1 )
-                    return palette[ bucket ] or out_of_range_color
-                end,
-            __newindex  = _assert_read_only
-        } )
+    return function( value )
+                local offset = ( value - min ) / bucket_size
+                local bucket = 1 + math_tointeger( offset // 1 )
+                return palette[ bucket ] or out_of_range_color
+            end
 end
 
 local heatmap =
