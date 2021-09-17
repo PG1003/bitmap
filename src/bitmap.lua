@@ -26,6 +26,7 @@ local color = require( "bitmap.color" )
 --
 
 local math_min         = math.min
+local math_max         = math.max
 local math_type        = math.type
 local math_abs         = math.abs
 local table_concat     = table.concat
@@ -94,8 +95,6 @@ local function _decode_bitmap_format( format )
             return "rgb", 24, 0xFF0000, 0x00FF00, 0x0000FF
         elseif bits_per_pixel == 32 then
             return "rgb", 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000
-        else
-            assert( false, "Unrecognized format" )
         end
     end
 
@@ -492,9 +491,9 @@ local function _read_dib( f )
             elseif bits_per_pixel == 16 then
                 return dib_size, width, height, bits_per_pixel, compression, number_palette_colors, 0x7C00, 0x03E0, 0x001F
             elseif bits_per_pixel == 24 then
-                return dib_size, width, height, bits_per_pixel, compression, number_palette_colors, 0xFF000, 0x00FF00, 0x0000FF
+                return dib_size, width, height, bits_per_pixel, compression, number_palette_colors, 0xFF0000, 0x00FF00, 0x0000FF
             elseif bits_per_pixel == 32 then
-                return dib_size, width, height, bits_per_pixel, compression, number_palette_colors, 0x00FF000, 0x0000FF00, 0x000000FF
+                return dib_size, width, height, bits_per_pixel, compression, number_palette_colors, 0x00FF0000, 0x0000FF00, 0x000000FF
             end
         end
 
@@ -584,7 +583,7 @@ local function _open( file )
         local red_shift   = _calc_shift( red_mask,   0x00FF0000 )
         local green_shift = _calc_shift( green_mask, 0x0000FF00 )
         local blue_shift  = _calc_shift( blue_mask,  0x000000FF )
-        local alpha_shift = 0, 0
+        local alpha_shift = 0
         
         if alpha_mask and alpha_mask > 0 then
             alpha_shift = _calc_shift( alpha_mask, 0xFF000000 )
@@ -758,18 +757,10 @@ local function _psnr( reference, other )
     return psnr_total, psnr_r, psnr_g, psnr_b
 end
 
-local function _luminance_lookup_index( self, key )
-   local luminance = color_luminance( key )
-   rawset( self, key, luminance )
-   
-   return luminance
-end
-
 -- https://tannerhelland.com/2012/12/28/dithering-eleven-algorithms-source-code.html
 -- https://shihn.ca/posts/2020/dithering/
+
 local function _dither_bw( bmp )
-    luminance_lookup = setmetatable( {}, { __index = _luminance_lookup_index } )
-    
     local diffuse_0 = {}
     local diffuse_1 = {}
     
@@ -790,13 +781,12 @@ local function _dither_bw( bmp )
         for i, value in ipairs( row ) do
             local i_next = i + 1
             local i_prev = i - 1
-            local L      = luminance_lookup[ value ] + diffuse_0[ i ]
+            local L      = color_luminance( value ) + ( diffuse_0[ i ] / 16.0 )
             
             if L >= 50.0 then
-                L        = ( L - 100.0 ) / 16.0
+                L        = L - 100.0
                 row[ i ] = 0xFFFFFFFF
             else
-                L        = L / 16.0
                 row[ i ] = 0xFF000000
             end
             
@@ -813,6 +803,139 @@ local function _dither_bw( bmp )
     end    
 end
 
+local function _dither( bmp, format, palette )
+    local compression, bits_per_pixel, red_mask, green_mask, blue_mask, alpha_mask = _decode_bitmap_format( format )
+    
+    local quantize = nil
+    if compression == "indexed" then
+        assert( type( palette ) == "table" and #palette > 0 )
+        
+        local quatization_lookup = {}
+        local palette_Lab_lookup = {}
+        
+        for _, value in ipairs( palette ) do
+            palette_Lab_lookup[ value & 0x00FFFFFF ] = { color_to_Lab( value ) }
+            quatization_lookup[ value ]              = value
+        end
+        
+        quantize = function( color )   
+            local quantized_color = quatization_lookup[ color ]
+            if not quantized_color then
+                local L1, a1, b1       = color_to_Lab( color )
+                local nearest_distance = 100.0   -- Maximum distance
+                
+                quantized_color = palette[ 1 ]
+                for palette_color, Lab2 in pairs( palette_Lab_lookup ) do
+                    local distance = color_delta_e94( L1, a1, b1, Lab2[ 1 ], Lab2[ 2 ], Lab2[ 3 ] )
+                    if distance < nearest_distance then
+                        quantized_color  = palette_color
+                        nearest_distance = distance
+                    end
+                end
+                quatization_lookup[ color ] = quantized_color
+            end
+            
+            return quantized_color
+        end
+    else
+        local all_masks = { { "R", red_mask }, { "G", green_mask }, { "B", blue_mask }, { "A", alpha_mask or 0 } }
+        table.sort( all_masks, function( l, r ) return l[ 2 ] < r[ 2 ] end )
+        
+        local red_pixel_mask   = nil
+        local green_pixel_mask = nil
+        local blue_pixel_mask  = nil
+        
+        local shift = 0
+        for _, color_mask in ipairs( all_masks ) do
+            local color     = color_mask[ 1 ]
+            local mask      = color_mask[ 2 ] >> shift
+            local mask_size = math.log( 1 + mask, 2 )
+            if color == "R" then
+                red_pixel_mask = mask << ( 24 - mask_size )
+            elseif color == "G" then
+                green_pixel_mask = mask << ( 16 - mask_size )
+            elseif color == "B" then
+                blue_pixel_mask = mask << ( 8 - mask_size )
+            end
+            shift = shift + mask_size
+        end
+        
+        local quantize_mask = red_pixel_mask | green_pixel_mask | blue_pixel_mask | 0xFF000000
+        
+        quantize = function( color )
+            return color & quantize_mask
+        end
+    end
+    
+    local diffuse_0 = {}
+    local diffuse_1 = {}
+    
+    local width = bmp:width()
+    
+    for i = 1, width do
+        diffuse_0[ i ] = { 0, 0, 0 }
+        diffuse_1[ i ] = { 0, 0, 0 }
+    end
+    
+    for _, row in ipairs( bmp ) do
+        diffuse_0, diffuse_1 = diffuse_1, diffuse_0
+        
+        diffuse_1[ 1 ][ 1 ] = 0
+        diffuse_1[ 1 ][ 2 ] = 0
+        diffuse_1[ 1 ][ 3 ] = 0
+
+        for i, value in ipairs( row ) do
+            local i_next = i + 1
+            local i_prev = i - 1
+            
+            local r = ( value & 0xFF0000 ) >> 16
+            local g = ( value & 0x00FF00 ) >>  8
+            local b =   value & 0x0000FF
+        
+            local diffusion_error = diffuse_0[ i ]
+            local r_diffused      = math_min( math_max( r + ( diffusion_error[ 1 ] // 16.0 ), 0 ), 255 )
+            local g_diffused      = math_min( math_max( g + ( diffusion_error[ 2 ] // 16.0 ), 0 ), 255 )
+            local b_diffused      = math_min( math_max( b + ( diffusion_error[ 3 ] // 16.0 ), 0 ), 255 )
+
+            local diffused_color  = r_diffused << 16 | g_diffused << 8 | b_diffused
+            local quantized_color = quantize( diffused_color )
+            
+            local r_quantized = ( quantized_color & 0xFF0000 ) >> 16
+            local g_quantized = ( quantized_color & 0x00FF00 ) >>  8
+            local b_quantized =   quantized_color & 0x0000FF
+            
+            local r_error = r_diffused - r_quantized
+            local g_error = g_diffused - g_quantized
+            local b_error = b_diffused - b_quantized
+            
+            local diffuse_1_i = diffuse_1[ i ]
+            diffuse_1_i[ 1 ]  = diffuse_1_i[ 1 ] + 5 * r_error
+            diffuse_1_i[ 2 ]  = diffuse_1_i[ 2 ] + 5 * g_error
+            diffuse_1_i[ 3 ]  = diffuse_1_i[ 3 ] + 5 * b_error
+            
+            if i_prev >= 1 then
+                local diffuse_1_prev = diffuse_1[ i_prev ]
+                diffuse_1_prev[ 1 ]  = diffuse_1_prev[ 1 ] + 3 * r_error
+                diffuse_1_prev[ 2 ]  = diffuse_1_prev[ 2 ] + 3 * g_error
+                diffuse_1_prev[ 3 ]  = diffuse_1_prev[ 3 ] + 3 * b_error
+            end
+            if i_next <= width then
+                local diffuse_0_next = diffuse_0[ i_next ]
+                diffuse_0_next[ 1 ]  = diffuse_0_next[ 1 ] + 7 * r_error
+                diffuse_0_next[ 2 ]  = diffuse_0_next[ 2 ] + 7 * g_error
+                diffuse_0_next[ 3 ]  = diffuse_0_next[ 3 ] + 7 * b_error
+                
+                local diffuse_1_next = diffuse_1[ i_next ]
+                diffuse_1_next[ 1 ]  = r_error
+                diffuse_1_next[ 2 ]  = g_error
+                diffuse_1_next[ 3 ]  = b_error
+            end
+            
+            row[ i ] = quantized_color
+        end
+    end
+end
+
 
 local bitmap =
 {
@@ -824,7 +947,8 @@ local bitmap =
     blit          = _blit,
     diff          = _diff,
     psnr          = _psnr,
-    dither_bw     = _dither_bw
+    dither_bw     = _dither_bw,
+    dither        = _dither
 }
 
 return bitmap
