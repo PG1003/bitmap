@@ -83,18 +83,18 @@ local function _heatmap_palette()
     test.is_same( #palette, 5 )
     
     local hm_palette1 = heatmap.make_heatmap_palette( 1, 5, palette, out_of_range_color )
-    test.is_same( hm_palette1[ 0 ], out_of_range_color )
-    test.is_same( hm_palette1[ 1 ], color1 )
-    test.is_same( hm_palette1[ 3 ], color2 )
-    test.is_same( hm_palette1[ 5 ], color3 )
-    test.is_same( hm_palette1[ 6 ], out_of_range_color )
+    test.is_same( hm_palette1( 0 ), out_of_range_color )
+    test.is_same( hm_palette1( 1 ), color1 )
+    test.is_same( hm_palette1( 3 ), color2 )
+    test.is_same( hm_palette1( 5 ), color3 )
+    test.is_same( hm_palette1( 6 ), out_of_range_color )
     
     local hm_palette2 = heatmap.make_heatmap_palette( 0.1, 0.5, palette, out_of_range_color )
-    test.is_same( hm_palette2[ 0.0 ], out_of_range_color )
-    test.is_same( hm_palette2[ 0.1 ], color1 )
-    test.is_same( hm_palette2[ 0.30001 ], color2 )  -- Some floating point valuess are problematic due to nature of floating points.
-    test.is_same( hm_palette2[ 0.5 ], color3 )      -- Users of this library should be aware of this when using limited ranges with a few colors.
-    test.is_same( hm_palette2[ 0.6 ], out_of_range_color )
+    test.is_same( hm_palette2( 0.0 ), out_of_range_color )
+    test.is_same( hm_palette2( 0.1 ), color1 )
+    test.is_same( hm_palette2( 0.30001 ), color2 )  -- Some floating point valuess are problematic due to nature of floating points.
+    test.is_same( hm_palette2( 0.5 ), color3 )      -- Users of this library should be aware of this when using limited ranges with a few colors.
+    test.is_same( hm_palette2( 0.6 ), out_of_range_color )
 end
 
 local function _bitmap_view()
@@ -154,13 +154,34 @@ local function _bitmap_view()
     test.is_same( color2, hm_view:get( 6, 21 ) )
     test.is_same( color2, hm_view:get( 10, 25 ) )
     test.is_same( color2, hm_view:get( 10, 25 ) )
+       
+end
+
+local function _heatmap_view_file_roundtrip()
+    local reference_file   = test.get_resource_file( "heatmap.bmp" )    
+    local reference_bitmap = bitmap.open( reference_file )
     
-    -- Test if the bitmap like interface is not broken
-    local file = test.get_results_file( "heatmap.bmp" )
-    bitmap.save( hm_view, file, "RGB24" )
+    local pal = {}
+    palettes.add_gradient( pal, 0xFF0000FF, 0xFFFFFFFF, 8 )
+    palettes.add_gradient( pal, nil, 0xFFFF0000, 7 )
+
+    local hm_palette = heatmap.make_heatmap_palette( 2, 16, pal )
+
+    local hm = heatmap.create( 8, 8 )
+    for y = 1, hm:height() do
+        for x = 1, hm:width() do
+            hm:set( x, y, x + y )
+        end
+    end
+
+    local hm_view = heatmap.make_bitmap_view( hm, 14, 14, hm_palette )
+    test.is_same_bitmap( hm_view, reference_bitmap )
+
+    local result_file = test.get_results_file( "heatmap.bmp" )
+    bitmap.save( hm_view, result_file, "RGB4", pal )
     
-    local bmp = bitmap.open( file )
-    test.is_same_bitmap( hm_view, bmp )    
+    local result_bitmap = bitmap.open( result_file )    
+    test.is_same_bitmap( result_bitmap, reference_bitmap )
 end
 
 
@@ -172,7 +193,8 @@ local tests =
     heatmap_increase_value      = _heatmap_increase_value,
     heatmap_decrease_value      = _heatmap_decrease_value,
     heatmap_palette             = _heatmap_palette,
-    bitmap_view                 = _bitmap_view
+    bitmap_view                 = _bitmap_view,
+    heatmap_view_file_roundtrip = _heatmap_view_file_roundtrip
 }
 
 return tests
