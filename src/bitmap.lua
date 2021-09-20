@@ -761,8 +761,9 @@ end
 -- https://shihn.ca/posts/2020/dithering/
 
 local function _dither_bw( bmp )
-    local diffuse_0 = {}
-    local diffuse_1 = {}
+    local quatization_lookup = {}
+    local diffuse_0          = {}
+    local diffuse_1          = {}
     
     local width = bmp:width()
     
@@ -778,26 +779,26 @@ local function _dither_bw( bmp )
         -- The remaining values are overwritten by the algoritm.
         diffuse_1[ 1 ] = 0.0
         
-        for i, value in ipairs( row ) do
-            local i_next = i + 1
-            local i_prev = i - 1
-            local L      = color_luminance( value ) + ( diffuse_0[ i ] / 16.0 )
+        for x, value in ipairs( row ) do
+            local x_next = x + 1
+            local x_prev = x - 1
+            local L      = color_luminance( value ) + ( diffuse_0[ x ] / 16.0 )
             
             if L >= 50.0 then
                 L        = L - 100.0
-                row[ i ] = 0xFFFFFFFF
+                row[ x ] = 0xFFFFFFFF
             else
-                row[ i ] = 0xFF000000
+                row[ x ] = 0xFF000000
             end
             
-            diffuse_1[ i ] = diffuse_1[ i ] + 5.0 * L
+            diffuse_1[ x ] = diffuse_1[ x ] + 5.0 * L
             
-            if i_prev >= 1 then
-                diffuse_1[ i_prev ] = diffuse_1[ i_prev ] + 3.0 * L
+            if x_prev >= 1 then
+                diffuse_1[ x_prev ] = diffuse_1[ x_prev ] + 3.0 * L
             end
-            if i_next <= width then
-                diffuse_0[ i_next ] = diffuse_0[ i_next ] + 7.0 * L
-                diffuse_1[ i_next ] = L
+            if x_next <= width then
+                diffuse_0[ x_next ] = diffuse_0[ x_next ] + 7.0 * L
+                diffuse_1[ x_next ] = L
             end
         end
     end    
@@ -872,9 +873,9 @@ local function _dither( bmp, format, palette )
     
     local width = bmp:width()
     
-    for i = 1, width do
-        diffuse_0[ i ] = { 0, 0, 0 }
-        diffuse_1[ i ] = { 0, 0, 0 }
+    for x = 1, width do
+        diffuse_0[ x ] = { 0, 0, 0 }
+        diffuse_1[ x ] = { 0, 0, 0 }
     end
     
     for _, row in ipairs( bmp ) do
@@ -884,15 +885,15 @@ local function _dither( bmp, format, palette )
         diffuse_1[ 1 ][ 2 ] = 0
         diffuse_1[ 1 ][ 3 ] = 0
 
-        for i, value in ipairs( row ) do
-            local i_next = i + 1
-            local i_prev = i - 1
+        for x, value in ipairs( row ) do
+            local x_next = x + 1
+            local x_prev = x - 1
             
             local r = ( value & 0xFF0000 ) >> 16
             local g = ( value & 0x00FF00 ) >>  8
             local b =   value & 0x0000FF
         
-            local diffusion_error = diffuse_0[ i ]
+            local diffusion_error = diffuse_0[ x ]
             local r_diffused      = math_min( math_max( r + ( diffusion_error[ 1 ] // 16.0 ), 0 ), 255 )
             local g_diffused      = math_min( math_max( g + ( diffusion_error[ 2 ] // 16.0 ), 0 ), 255 )
             local b_diffused      = math_min( math_max( b + ( diffusion_error[ 3 ] // 16.0 ), 0 ), 255 )
@@ -908,30 +909,30 @@ local function _dither( bmp, format, palette )
             local g_error = g_diffused - g_quantized
             local b_error = b_diffused - b_quantized
             
-            local diffuse_1_i = diffuse_1[ i ]
-            diffuse_1_i[ 1 ]  = diffuse_1_i[ 1 ] + 5 * r_error
-            diffuse_1_i[ 2 ]  = diffuse_1_i[ 2 ] + 5 * g_error
-            diffuse_1_i[ 3 ]  = diffuse_1_i[ 3 ] + 5 * b_error
+            local diffuse_1_x = diffuse_1[ x ]
+            diffuse_1_x[ 1 ]  = diffuse_1_x[ 1 ] + 5 * r_error
+            diffuse_1_x[ 2 ]  = diffuse_1_x[ 2 ] + 5 * g_error
+            diffuse_1_x[ 3 ]  = diffuse_1_x[ 3 ] + 5 * b_error
             
-            if i_prev >= 1 then
-                local diffuse_1_prev = diffuse_1[ i_prev ]
+            if x_prev >= 1 then
+                local diffuse_1_prev = diffuse_1[ x_prev ]
                 diffuse_1_prev[ 1 ]  = diffuse_1_prev[ 1 ] + 3 * r_error
                 diffuse_1_prev[ 2 ]  = diffuse_1_prev[ 2 ] + 3 * g_error
                 diffuse_1_prev[ 3 ]  = diffuse_1_prev[ 3 ] + 3 * b_error
             end
-            if i_next <= width then
-                local diffuse_0_next = diffuse_0[ i_next ]
+            if x_next <= width then
+                local diffuse_0_next = diffuse_0[ x_next ]
                 diffuse_0_next[ 1 ]  = diffuse_0_next[ 1 ] + 7 * r_error
                 diffuse_0_next[ 2 ]  = diffuse_0_next[ 2 ] + 7 * g_error
                 diffuse_0_next[ 3 ]  = diffuse_0_next[ 3 ] + 7 * b_error
                 
-                local diffuse_1_next = diffuse_1[ i_next ]
+                local diffuse_1_next = diffuse_1[ x_next ]
                 diffuse_1_next[ 1 ]  = r_error
                 diffuse_1_next[ 2 ]  = g_error
                 diffuse_1_next[ 3 ]  = b_error
             end
             
-            row[ i ] = quantized_color
+            row[ x ] = quantized_color
         end
     end
 end
