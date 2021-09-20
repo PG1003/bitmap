@@ -1,6 +1,6 @@
 # Bitmap Manipulation Primitives
 
-A pure Lua module to open, modify and save bitmap images.
+A pure Lua module to open, create, modify and save bitmap images.
 
 ## Features
 
@@ -9,11 +9,15 @@ A pure Lua module to open, modify and save bitmap images.
   * 1, 4 and 8 bit indexed.
   * regular 16, 24 and 32 bit RGB.
   * bitfields, including alpha.
+* Auxiliary functions such as;
+  * Dithering bitmaps in black/white and color.
+  * Calculating PSNR.
+  * Generating diffs from bitmaps.
 * Creating heatmaps.
 * Additional color module providing the following features;
-  * colorspace conversions back and forth between RGB and other formats like HSV, HSL and Lab.
+  * colorspace conversions back and forth between RGB and the HSV, HSL and Lab colorspaces.
   * color comparison with Delta E76 and Delta E94.
-  * color quantisation using median cut.
+  * color quantization using median cut.
 
 See the [reference](/reference.md) for the complete overview of the API.
 
@@ -23,7 +27,7 @@ See the [reference](/reference.md) for the complete overview of the API.
 
 ## Examples
 
-The following example loads a btimap image and convert it to a 256 color 8 bit indexed bitmap.
+The following example loads a bitmap image and convert it to a 256 color 8 bit indexed bitmap.
 
 ``` lua
 local bitmap = require( "bitmap" )
@@ -47,4 +51,36 @@ local viewport             = bitmap.make_viewport( bmp, 1, 1, 42, 42 )
 bitmap.save( viewport, "kodim23_vp.bmp", format, palette )
 ```
 
-You can find these and other examples in the [tests](/test).
+This example shows the usage of a heatmap and saving it to a bitmap file.
+
+``` lua
+local bitmap   = require( "bitmap" )
+local palettes = require( "bitmap.palettes" )
+local heatmap  = require( "bitmap.heatmap" )
+
+-- Create an 8 by 8 heatmap and fill it with data.
+local hm = heatmap.create( 8, 8 )
+for y = 1, hm:height() do
+    for x = 1, hm:width() do
+        hm:set( x, y, x + y )
+    end
+end
+
+-- Generate a palette with a gradient from blue to white to red.
+local pal = {}
+palettes.add_gradient( pal, 0xFF0000FF, 0xFFFFFFFF, 8 )
+palettes.add_gradient( pal, nil, 0xFFFF0000, 7 )
+
+-- Create a heatmap palette object with a range from 2 to 16 (inclusive).
+local hm_pal = heatmap.make_heatmap_palette( 2, 16, pal )
+
+-- Create a bitmap like interface for the heatmap with a cell size of 14 by 14 pixels.
+local hm_view = heatmap.make_bitmap_view( hm, 14, 14, hm_pal )
+
+-- Save the heatmap as bitmap image.
+bitmap.save( hm_view, "heatmap.bmp", "RGB4", pal )
+```
+
+Results in the bitmap below.
+
+![Heatmap image](/test/resources/heatmap.bmp)
