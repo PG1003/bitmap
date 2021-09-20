@@ -7,6 +7,7 @@
 [blit](#blit-dst-x-y-src-)  
 [create](#create-width-height--init_color-)  
 [diff](#diff-left-right-)  
+[dither](#dither-bmp-format-palette-)  
 [dither_bw](#dither_bw-bmp-)  
 [make_viewport](#make_viewport-src_bmp-x-y-width-height-)  
 [open](#open-file-)  
@@ -85,9 +86,16 @@ If the optional `init_color` was not provided then the value '0' (black) will be
 Takes two identical sized bitmaps and creates a new bitmap with color values that are the difference between the two bitmaps.
 The difference in color values are absolute; the color component values ranges from 0 up to 255.
 
+### `dither( bmp, format [, palette] )`
+
+Quantizes the pixels of `bmp` given the `format` and applies dithering using the Floyd-Steinberg algorithm.
+`format` is a string following a pattern as described in [format patterns](#Format-patterns).
+`palette` is required when `format` is RGB1, RGB4 or RGB8.
+
 ### `dither_bw( bmp )`
 
-Converts a bitmap to a dithered black/white image by using the Floyd-Steinberg algorithm.
+Quantizes the pixels of `bmp` to black/white and applies dithering using the Floyd-Steinberg algorithm.
+This function gives better results than the [dither](#dither-bmp-format-palette-) function with a RGB1 format combined with a black/white palette.
 
 ### `make_viewport( src_bmp, x, y, width, height )`
 
@@ -98,10 +106,10 @@ The viewport area must be defined within the dimentions of `src_bmp`.
 
 ### `open( file )`
 
-Opens a bitmap file and returns a bitmap table and format.
+Reads a bitmap file and returns a bitmap object and format.
 If the opened file was an indexed bitmap, a third value is returned containing the palette.
 The format is a string with a pattern that discribes what kind of bitmap format was opened.
-See [Format patterns](#Format-patterns) about how a pattern is encoded.
+See [format patterns](#Format-patterns) about how a pattern is encoded.
 
 ### `pixels( bmp )`
 
@@ -117,8 +125,9 @@ Returns 4 values; psnr of the color components combined, psnr red, psnr green an
 ### `save( bmp, file, format [, palette] )`
 
 Saves `bmp` to `file` with the given `format`.
-The `format` is a string folowing a pattern as described [here](#Format-patterns).
-`palette` is required if `format` is a pattern of an indexed bitmap type.
+`bmp` can be any bitmap like structure such as returned by [open](#open-file-), [make_viewport](#make_viewport-src_bmp-x-y-width-height-) and [make_heatmap_palette](#make_heatmap_palette-min-max-palette--out_of_range_color-).  
+The `format` is a string folowing a pattern as described in [format patterns](#Format-patterns).
+`palette` is required when `format` is RGB1, RGB4 or RGB8.
 A `palette` is a table with maximum of 256 that has for each index a color.
 
 ### `bitmap:get( x, y )`
@@ -179,7 +188,7 @@ The pixel size is 32 bits for formats with a total bit count of more than 16 bit
 
 ## bitmap.color
 
-A color is a 32 bit value that represents an RGB color model with an alpha.
+A color is a 32 bit value that represents an RGB colorspace with an alpha.
 Each color component is an 8 bit value ranging from 0 up to 255 and is packed as in the table below.
 
 |Color component | Bit mask|
@@ -200,13 +209,13 @@ Returns the blue component value from a color.
 
 ### `delta_e76( L1, a1, b1, L2, a2, b2 )`
 
-Takes two colors in the Lab color model and calculates the distance between two colors using the CIE76 formula.
+Takes two colors in the Lab colorspace and calculates the distance between two colors using the CIE76 formula.
 The value '0.0' means both colors are same.  
 This calculation is faster but less accurate than the [delta_e94](#delta_e94-l1-a1-b1-l2-a2-b2-) function.
 
 ### `delta_e94( L1, a1, b1, L2, a2, b2 )`
 
-Takes two colors in the Lab color model and calculates the distance between two colors using the CIE94 formula.
+Takes two colors in the Lab colorspace and calculates the distance between two colors using the CIE94 formula.
 The value '0.0' means both colors are same.
 
 ### `green( color )`
@@ -215,16 +224,16 @@ Returns the green component value from a color.
 
 ### `from_hsl( h, s, l )`
 
-Returns a color that is converted from the HSL color model values.
+Returns a color that is converted from the HSL colorspace values.
 
 ### `from_hsv( h, s, v [, a] )`
 
-Returns a color that is converted from the HSV color model values.
+Returns a color that is converted from the HSV colorspace values.
 The optional parameter `a` is a value between 0.0 up to 1.0 that is transformed to an alpha.
 
 ### `from_Lab( L, a, b )`
 
-Returns a color that is converted from the CIE Lab color model values.
+Returns a color that is converted from the CIE Lab colorspace values.
 
 ### `from_rgba( r, g, b [, a] )`
 
@@ -238,9 +247,9 @@ The advantage over this function over the [to_Lab](#to_lab-color-) function is t
 
 ### `quantize( colors, n_colors )`
 
-Quantizes the colors in the table `colors` to a total of `n_colors` using the median cut algorithm.
+Quantizes the colors in the table `colors` to a total of `n_colors` using the median cut algorithm in the RGB colorspace.
 A table with a maximum of `n_colors` quantized is returned.
-Less colors are returned when the image doesn't contain `n_colors`.
+Less colors are returned when the image doesn't contain at least `n_colors`.
 
 ### `red( color )`
 
@@ -253,16 +262,16 @@ The resulting value of color components is clipped to 0.
 
 ### `to_hsl( color )`
 
-Returns the representation of `color` in HSL color model values.
+Returns the representation of `color` in HSL colorspace values.
 
 ### `to_hsv( color )`
 
-Returns the representation of `color` in HSV color model values.
+Returns the representation of `color` in HSV colorspace values.
 The fourth returned value is the alpha ranging from 0.0 up to 1.0.
 
 ### `to_Lab( color )`
 
-Returns the representation of `color` in CIE Lab color model values.
+Returns the representation of `color` in CIE Lab colorspace values.
 
 ### `to_rgba( color )`
 
@@ -284,7 +293,7 @@ Each cell is given a width and height of resp. `cell_size_x` and `cell_size_y` p
 
 ### `make_heatmap_palette( min, max, palette [, out_of_range_color] )`
 
-Creates a heatmap palette.
+Creates a heatmap palette object.
 The range of the palette is defined by `min` and `max` parameters.
 `palette` is a table that is used as an list and contains at least one color.  
 The optional parameter `out_of_range_color` color is returned when a value outside de range is requested.
@@ -298,6 +307,8 @@ This results in a heatmap palette that has a larger effective range, in this cas
 
 You must also be aware when using floating point numbers that a heatmap palette may return an adjacent color because floating points numbers are not infinit accurate.
 This effect may be noticeable when using a descrete palette.
+
+The interface of the heamap palette is an implementation detail and therefore not documented.
 
 ### `bitmap_view:decrease( x, y, value )`
 
