@@ -42,13 +42,16 @@
 ### bitmap.heatmap
 
 [create](#create-width-height--init-)  
-[make_bitmap_view](#make_bitmap_view-hm-cell_size_x-cell_size_y-palette-)  
+[make_bitmap_view](#make_bitmap_view-hm-cell_size_x-cell_size_y-hm_palette-)  
 [make_heatmap_palette](#make_heatmap_palette-min-max-palette--out_of_range_color-)  
-[bitmap_view:decrease](#bitmap_viewdecrease-x-y-value-)  
+[heatmap:decrease](#heatmapdecrease-x-y--value-)  
+[heatmap:get](#heatmapget-x-y-)  
+[heatmap:height](#heatmapheight)  
+[heatmap:increase](#heatmapincrease-x-y--value-)  
+[heatmap:set](#heatmapset-x-y-value-)  
+[heatmap:width](#heatmapwidth)  
 [bitmap_view:get](#bitmap_viewget-x-y-)  
 [bitmap_view:height](#bitmap_viewheight)  
-[bitmap_view:increase](#bitmap_viewincrease-x-y-value-)  
-[bitmap_view:set](#bitmap_viewset-x-y-value-)  
 [bitmap_view:width](#bitmap_viewwidth)
   
 ### bitmap.palettes
@@ -66,7 +69,7 @@ This means when accessing a pixel, first the row is selected, then the column, e
 You can also use the [bitmap:get](#bitmapget-x-y-) and [bitmap:set](bitmapset-x-y-color-) functions which are more intuitive but slightly slower.
 
 The origin of the bitmap is placed at lower left corner.
-This choise was made to simplify the visualization of datapoints.
+This choice was made to simplify the visualization of datapoints.
 
 See the [color](#color) support library about how the color value of a pixel is defined.
 
@@ -107,7 +110,7 @@ The viewport area must be defined within the dimentions of `src_bmp`.
 ### `open( file )`
 
 Reads a bitmap file and returns a bitmap object and format.
-If the opened file was an indexed bitmap, a third value is returned containing the palette.
+If the opened file was an indexed bitmap, a third value containing the palette is returned.
 The format is a string with a pattern that discribes what kind of bitmap format was opened.
 See [format patterns](#Format-patterns) about how a pattern is encoded.
 
@@ -125,10 +128,10 @@ Returns 4 values; psnr of the color components combined, psnr red, psnr green an
 ### `save( bmp, file, format [, palette] )`
 
 Saves `bmp` to `file` with the given `format`.
-`bmp` can be any bitmap like structure such as returned by [open](#open-file-), [make_viewport](#make_viewport-src_bmp-x-y-width-height-) and [make_heatmap_palette](#make_heatmap_palette-min-max-palette--out_of_range_color-).  
+`bmp` can be any bitmap like structure such as returned by [open](#open-file-), [make_viewport](#make_viewport-src_bmp-x-y-width-height-) and [make_bitmap_view](#make_bitmap_view-hm-cell_size_x-cell_size_y-hm_palette-).  
 The `format` is a string folowing a pattern as described in [format patterns](#Format-patterns).
 `palette` is required when `format` is RGB1, RGB4 or RGB8.
-A `palette` is a table with maximum of 256 that has for each index a color.
+A `palette` is a table with a maximum size of 256 which has for each index a color.
 
 ### `bitmap:get( x, y )`
 
@@ -181,7 +184,7 @@ The red, green and blue components are required, alpha is optional.
 |`ABGR1555` | `ABBBBBGGGGGRRRRR`|
 |`RGBA2222` | `--------RRGGBBAA`|
 |`RGB888` | `--------RRRRRRRRGGGGGGGGBBBBBBBB`|
-|`AGRB888` | `AAAAAAAAGGGGGGGGRRRRRRRRBBBBBBBB`|
+|`AGRB8888` | `AAAAAAAAGGGGGGGGRRRRRRRRBBBBBBBB`|
 
 The minimum size of a pixel for bitfield type formats is 16 bits.
 The pixel size is 32 bits for formats with a total bit count of more than 16 bits.
@@ -210,13 +213,13 @@ Returns the blue component value from a color.
 ### `delta_e76( L1, a1, b1, L2, a2, b2 )`
 
 Takes two colors in the Lab colorspace and calculates the distance between two colors using the CIE76 formula.
-The value '0.0' means both colors are same.  
+The value 0.0 means both colors are same.  
 This calculation is faster but less accurate than the [delta_e94](#delta_e94-l1-a1-b1-l2-a2-b2-) function.
 
 ### `delta_e94( L1, a1, b1, L2, a2, b2 )`
 
 Takes two colors in the Lab colorspace and calculates the distance between two colors using the CIE94 formula.
-The value '0.0' means both colors are same.
+The value 0.0 means both colors are same.
 
 ### `green( color )`
 
@@ -283,20 +286,20 @@ Returns the red, green, blue and alpha color components of `color`.
 
 Returns a new heatmap with `width` number of cells for X and `height` number of cells for Y.  
 `init` is an optional parameter which will be the initial value of the cells.
-The cells are initialized with `0.0` when init is not provided.
+The cells are initialized with 0 when `init` is not provided.
 
 ### `make_bitmap_view( hm, cell_size_x, cell_size_y, hm_palette )`
 
 Creates a _read-only_ bitmap like view for the given heatmap `hm`.
-Each cell is given a width and height of resp. `cell_size_x` and `cell_size_y` pixels.  
+Each cell is given a width and height of `cell_size_x` and `cell_size_y` pixels.  
 `hm_palette` is a heatmap palette created by [make_heatmap_palette](#make_heatmap_palette-min-max-palette--out_of_range_color-) that is used to translate the heatmap cell values to colors.
 
 ### `make_heatmap_palette( min, max, palette [, out_of_range_color] )`
 
 Creates a heatmap palette object.
 The range of the palette is defined by `min` and `max` parameters.
-`palette` is a table that is used as an list and contains at least one color.  
-The optional parameter `out_of_range_color` color is returned when a value outside de range is requested.
+`palette` is a table that is used as a list and contains at least one color.  
+The optional parameter `out_of_range_color` color is returned when a value outside the is requested range.
 Default value for `out_of_range_color` is `0xFF000000`.
 
 The range is _including_ the `max` value.
@@ -310,29 +313,45 @@ This effect may be noticeable when using a descrete palette.
 
 The interface of the heamap palette is an implementation detail and therefore not documented.
 
-### `bitmap_view:decrease( x, y, value )`
+### `heatmap:decrease( x, y [, value] )`
 
 Decreases a heatmap cell at position `x`,`y` with `value`.
+The cell's value is decreased by 1 when `value` is not provided.
 
-### `bitmap_view:get( x, y )`
+### `heatmap:get( x, y )`
 
-Returns heatmap cell value at position `x`,`y`.
+Returns heatmap cell value at position `x`,`y`.  
+Using this function may be slower than accessing the cells directly on the table structure but is more intuitive.
 
-### `bitmap_view:height()`
+### `heatmap:height()`
 
 Returns the number of cells available for Y.
 
-### `bitmap_view:increase( x, y, value )`
+### `heatmap:increase( x, y [, value] )`
 
 Increases a heatmap cell at position `x`,`y` with `value`.
+The cell's value is increased by 1 when `value` is not provided.
 
-### `bitmap_view:set( x, y, value )`
+### `heatmap:set( x, y, value )`
 
-Sets a heatmap cell at position `x`,`y` with `value`.
+Sets a heatmap cell at position `x`,`y` with `value`.  
+Using this function may be slower than accessing the cells directly on the table structure but is more intuitive.
+
+### `heatmap:width()`
+
+Returns the number of cells available for X.
+
+### `bitmap_view:get( x, y )`
+
+Returns the color value of the pixel at the given `x` and `y` of the bitmap view.
+
+### `bitmap_view:height()`
+
+Returns the height in pixels of a `bitmap_view`.
 
 ### `bitmap_view:width()`
 
-Returns the number of cells available for X.
+Returns the width in pixels of a `bitmap_view`.
 
 ## bitmap.palettes
 
@@ -340,13 +359,13 @@ Returns the number of cells available for X.
 
 Appends a `count` number of `color` values to `palette`.
 `count` must be at least 1 and less then 65536.
-When `count` is ommited a default of `1` is used.
+When `count` is ommited a default of 1 is used.
 
 ### `add_gradient( palette, from_color, to_color, count [, method] )`
 
 Appends a gradient from `from_color` to `to_color` with `count` number of colors to `palette`.
 If `from_color` is a false-like type (`nil` or `false`) then the value of `palette[ #palette ]` will be used to interpolate from but is not added (again) to `palette`.
-`count` must be less then 65536 and at least be `2` when `from_color` is provided or `1` when `from_color` is a false-like type.  
+`count` must be less then 65536 and at least be 2 when `from_color` is provided or 1 when `from_color` is a false-like type.  
 The optional `method` argument is a string that defines colorspace in which the linear interpolation between `from_color` and `to_color` is calculated.
 Valid values are `"RGB"`, `"HSL"`, `"HSV"` and `"LAB"`.
 The RGB colorspace is default method.
