@@ -71,7 +71,7 @@ local pal = {}
 palettes.add_gradient( pal, 0xFF0000FF, 0xFFFFFFFF, 8 )
 palettes.add_gradient( pal, nil, 0xFFFF0000, 7 )
 
--- Create a heatmap palette object with a range from 2 to 16 (inclusive).
+-- Create a heatmap palette object with a range from 2 until 16.
 local hm_pal = heatmap.make_heatmap_palette( 2, 16, pal )
 
 -- Create a bitmap like interface for the heatmap with a cell size of 14 by 14 pixels.
