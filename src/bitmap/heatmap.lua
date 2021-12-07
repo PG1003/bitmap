@@ -99,7 +99,7 @@ local function _create( width, height, init )
 end
 
 local function _assert_read_only()
-    assert( false, "Attempt to modify bitmap_view" )
+    assert( false, "Attempt to modify bitmap_view of a heatmap" )
 end
 
 local _bitmap_view_mt =
@@ -138,8 +138,10 @@ local function _make_bitmap_view( hm, cell_size_x, cell_size_y, hm_palette )
             __newindex  = _assert_read_only,
             __len       = len_x 
         }
+        local x_proxy = setmetatable( {}, x_proxy_mt )
+
         for _ = 1, cell_size_y do
-            view[ #view + 1 ] = setmetatable( {}, x_proxy_mt )
+            view[ #view + 1 ] = x_proxy
         end
     end
     
