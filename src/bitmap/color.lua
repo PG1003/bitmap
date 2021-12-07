@@ -412,7 +412,7 @@ end
 local function _sort_b( left, right )
     return left[ 3 ] < right[ 3 ]
 end
-    
+
 local function _quantize( colors, n_colors )
     assert( type( colors ) == "table" )
     assert( math.type( n_colors ) == "integer" )
@@ -425,7 +425,7 @@ local function _quantize( colors, n_colors )
         
         local r_min = 0xFF
         local g_min = 0xFF
-        local b_min = 0xFF    
+        local b_min = 0xFF
         local r_max = 0
         local g_max = 0
         local b_max = 0
@@ -499,7 +499,7 @@ local function _quantize( colors, n_colors )
             -- Keep the lower half in its current bin
             r_min = 0xFF
             g_min = 0xFF
-            b_min = 0xFF    
+            b_min = 0xFF
             r_max = 0
             g_max = 0
             b_max = 0
@@ -527,7 +527,7 @@ local function _quantize( colors, n_colors )
 
             r_min = 0xFF
             g_min = 0xFF
-            b_min = 0xFF    
+            b_min = 0xFF
             r_max = 0
             g_max = 0
             b_max = 0

@@ -337,7 +337,7 @@ local function _save( bmp, file, format, palette )
                 f:write( string_pack( ">I4", chunk ) )
             end
         end
-    elseif compression == "rgb" or compression == "bitfields" then        
+    elseif compression == "rgb" or compression == "bitfields" then
         local red_shift   = _calc_shift( 0x00FF0000, red_mask )
         local green_shift = _calc_shift( 0x0000FF00, green_mask )
         local blue_shift  = _calc_shift( 0x000000FF, blue_mask )
@@ -474,7 +474,7 @@ local function _read_dib( f )
         local width, height, color_planes, bits_per_pixel = string_unpack( "i4i4I2I2", f:read( 12 ) )
         assert( color_planes == 1 )    -- Only support for one plane
         
-        local compression_type = string_unpack( "I4", f:read( 4 ) )        
+        local compression_type = string_unpack( "I4", f:read( 4 ) )
         local compression      = _compression_format_type( compression_type, bits_per_pixel )
         
         -- Skip bitmap size
