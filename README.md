@@ -4,8 +4,8 @@ A pure Lua module to open, create, modify and save bitmap images.
 
 ## Features
 
-* Pure Lua, easy to use in existing applications.
-* Support for multiple kinds of uncopressed bitmap formats;
+* Pure Lua for easy integration into existing applications.
+* Support for multiple kinds of uncompressed bitmap formats;
   * 1, 4 and 8 bit indexed.
   * regular 16, 24 and 32 bit RGB.
   * bitfields, including alpha.
@@ -17,7 +17,7 @@ A pure Lua module to open, create, modify and save bitmap images.
 * Additional color module providing the following features;
   * colorspace conversions back and forth between RGB and the HSV, HSL and Lab colorspaces.
   * color comparison with Delta E76 and Delta E94.
-  * color quantization using median cut.
+  * color quantization using median cut in the RGB colorspace.
 
 See the [reference](/reference.md) for the complete overview of the API.
 

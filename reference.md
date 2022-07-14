@@ -71,7 +71,7 @@ You can also use the [bitmap:get](#bitmapget-x-y-) and [bitmap:set](bitmapset-x-
 The origin of the bitmap is placed at lower left corner.
 This choice was made to simplify the visualization of datapoints.
 
-See the [color](#color) support library about how the color value of a pixel is defined.
+See the [color](#bitmapcolor-1) support library about how the color value of a pixel is defined.
 
 ### `blit( dst, x, y, src )`
 
@@ -79,7 +79,7 @@ Copies the contents from the `src` bitmap to the `dst` bitmap.
 `x` and `y` is position of lower left corner of the `src` in the `dst` bitmap.
 The pixels of `src` that do not overlap the `dst` bitmap dimentions are discarded during the copy.
 
-### `create( width, height [, init_color] )`
+### `create( width, height [, init_color = 0] )`
 
 Creates a new bitmap with the given `width` and `height`.
 If the optional `init_color` was not provided then the value '0' (black) will be used as initial value of the pixels.
@@ -229,7 +229,7 @@ Returns the green component value from a color.
 
 Returns a color that is converted from the HSL colorspace values.
 
-### `from_hsv( h, s, v [, a] )`
+### `from_hsv( h, s, v [, a = 255] )`
 
 Returns a color that is converted from the HSV colorspace values.
 The optional parameter `a` is a value between 0.0 up to 1.0 that is transformed to an alpha.
@@ -238,7 +238,7 @@ The optional parameter `a` is a value between 0.0 up to 1.0 that is transformed 
 
 Returns a color that is converted from the CIE Lab colorspace values.
 
-### `from_rgba( r, g, b [, a] )`
+### `from_rgba( r, g, b [, a = 255] )`
 
 Returns a color that is converted from the RGB color component values.
 When the optional alpha is not provided the default value of 255 will be used.
@@ -282,7 +282,7 @@ Returns the red, green, blue and alpha color components of `color`.
 
 ## bitmap.heatmap
 
-### `create( width, height [, init] )`
+### `create( width, height [, init = 0] )`
 
 Returns a new heatmap with `width` number of cells for X and `height` number of cells for Y.  
 `init` is an optional parameter which will be the initial value of the cells.
@@ -294,7 +294,7 @@ Creates a _read-only_ bitmap like view for the given heatmap `hm`.
 Each cell is given a width and height of `cell_size_x` and `cell_size_y` pixels.  
 `hm_palette` is a heatmap palette created by [make_heatmap_palette](#make_heatmap_palette-min-max-palette--out_of_range_color-) that is used to translate the heatmap cell values to colors.
 
-### `make_heatmap_palette( min, max, palette [, out_of_range_color] )`
+### `make_heatmap_palette( min, max, palette [, out_of_range_color = 0xFF000000] )`
 
 Creates a heatmap palette object.
 The range of the palette is defined by `min` and `max` parameters.
@@ -313,7 +313,7 @@ This effect may be noticeable when using a descrete palette.
 
 The interface of the heamap palette is an implementation detail and therefore not documented.
 
-### `heatmap:decrease( x, y [, value] )`
+### `heatmap:decrease( x, y [, value = 1] )`
 
 Decreases a heatmap cell at position `x`,`y` with `value`.
 The cell's value is decreased by 1 when `value` is not provided.
@@ -327,7 +327,7 @@ Using this function may be slower than accessing the cells directly on the table
 
 Returns the number of cells available for Y.
 
-### `heatmap:increase( x, y [, value] )`
+### `heatmap:increase( x, y [, value = 1] )`
 
 Increases a heatmap cell at position `x`,`y` with `value`.
 The cell's value is increased by 1 when `value` is not provided.
@@ -355,13 +355,13 @@ Returns the width in pixels of a `bitmap_view`.
 
 ## bitmap.palettes
 
-### `add_color( palette, color [, count] )`
+### `add_color( palette, color [, count = 1] )`
 
 Appends a `count` number of `color` values to `palette`.
 `count` must be at least 1 and less then 65536.
 When `count` is ommited a default of 1 is used.
 
-### `add_gradient( palette, from_color, to_color, count [, method] )`
+### `add_gradient( palette, from_color, to_color, count [, method = "RGB"] )`
 
 Appends a gradient from `from_color` to `to_color` with `count` number of colors to `palette`.
 If `from_color` is a false-like type (`nil` or `false`) then the value of `palette[ #palette ]` will be used to interpolate from but is not added (again) to `palette`.
