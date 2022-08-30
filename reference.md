@@ -5,7 +5,7 @@
 ### bitmap
 
 [blit](#blit-dst-x-y-src-)  
-[create](#create-width-height--init_color-)  
+[create](#create-width-height--init_color--0-)  
 [diff](#diff-left-right-)  
 [dither](#dither-bmp-format-palette-)  
 [dither_bw](#dither_bw-bmp-)  
@@ -28,9 +28,9 @@
 [green](#green-color-)  
 [from_hcl](#from_hcl-h-c-l-)  
 [from_hsl](#from_hsl-h-s-l-)  
-[from_hsv](#from_hsv-h-s-v--a-)  
+[from_hsv](#from_hsv-h-s-v--a--255-)  
 [from_Lab](#from_lab-l-a-b-)  
-[from_rgba](#from_rgba-r-g-b--a-)  
+[from_rgba](#from_rgba-r-g-b--a--255-)  
 [luminance](#luminance-color-)  
 [quantize](#quantize-colors-n_colors-)  
 [red](#red-color-)  
@@ -43,13 +43,13 @@
 
 ### bitmap.heatmap
 
-[create](#create-width-height--init-)  
+[create](#create-width-height--init--0-)  
 [make_bitmap_view](#make_bitmap_view-hm-cell_size_x-cell_size_y-hm_palette-)  
-[make_heatmap_palette](#make_heatmap_palette-min-max-palette--out_of_range_color-)  
-[heatmap:decrease](#heatmapdecrease-x-y--value-)  
+[make_heatmap_palette](#make_heatmap_palette-min-max-palette--out_of_range_color--0xff000000-)  
+[heatmap:decrease](#heatmapdecrease-x-y--value--1-)  
 [heatmap:get](#heatmapget-x-y-)  
 [heatmap:height](#heatmapheight)  
-[heatmap:increase](#heatmapincrease-x-y--value-)  
+[heatmap:increase](#heatmapincrease-x-y--value--1-)  
 [heatmap:set](#heatmapset-x-y-value-)  
 [heatmap:width](#heatmapwidth)  
 [bitmap_view:get](#bitmap_viewget-x-y-)  
@@ -58,8 +58,8 @@
   
 ### bitmap.palettes
 
-[add_color](#add_color-palette-color--count-)  
-[add_gradient](#add_gradient-palette-from_color-to_color-count--method-)  
+[add_color](#add_color-palette-color--count--1-)  
+[add_gradient](#add_gradient-palette-from_color-to_color-count--method--rgb-)  
 [palette_2](#palette_2)  
 [palette_16](#palette_16)  
 [palette_256](#palette_256)
@@ -302,7 +302,7 @@ The cells are initialized with 0 when `init` is not provided.
 
 Creates a _read-only_ bitmap like view for the given heatmap `hm`.
 Each cell is given a width and height of `cell_size_x` and `cell_size_y` pixels.  
-`hm_palette` is a heatmap palette created by [make_heatmap_palette](#make_heatmap_palette-min-max-palette--out_of_range_color-) that is used to translate the heatmap cell values to colors.
+`hm_palette` is a heatmap palette created by [make_heatmap_palette](#make_heatmap_palette-min-max-palette--out_of_range_color--0xff000000-) that is used to translate the heatmap cell values to colors.
 
 ### `make_heatmap_palette( min, max, palette [, out_of_range_color = 0xFF000000] )`
 
