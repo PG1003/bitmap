@@ -26,6 +26,7 @@
 [delta_e76](#delta_e76-l1-a1-b1-l2-a2-b2-)  
 [delta_e94](#delta_e94-l1-a1-b1-l2-a2-b2-)  
 [green](#green-color-)  
+[from_hcl](#from_hcl-h-c-l-)  
 [from_hsl](#from_hsl-h-s-l-)  
 [from_hsv](#from_hsv-h-s-v--a-)  
 [from_Lab](#from_lab-l-a-b-)  
@@ -34,6 +35,7 @@
 [quantize](#quantize-colors-n_colors-)  
 [red](#red-color-)  
 [sub](#sub-left-right-)  
+[to_hcl](#to_hcl-color-)  
 [to_hsl](#to_hsl-color-)  
 [to_hsv](#to_hsv-color-)  
 [to_Lab](#to_lab-color-)  
@@ -178,8 +180,8 @@ A bitfield format defines first the order of the color components followed by th
 Each color component can be defined only once with a maximum size of 8 bits.
 The red, green and blue components are required, alpha is optional.
 
-|Format | Pixel bit pattern|
-|-------|------------------|
+|Example | Pixel bit pattern|
+|--------|------------------|
 |`RGB565` | `RRRRRGGGGGGBBBBB`|
 |`ABGR1555` | `ABBBBBGGGGGRRRRR`|
 |`RGBA2222` | `--------RRGGBBAA`|
@@ -225,6 +227,10 @@ The value 0.0 means both colors are same.
 
 Returns the green component value from a color.
 
+### `from_hcl( h, c, l )`
+
+Returns a color that is converted from the HCL color model values.
+
 ### `from_hsl( h, s, l )`
 
 Returns a color that is converted from the HSL colorspace values.
@@ -262,6 +268,10 @@ Returns the red component value from a color.
 
 Substracts two color.
 The resulting value of color components is clipped to 0.
+
+### `to_hcl( color )`
+
+Returns the representation of `color` in HCL color model values.
 
 ### `to_hsl( color )`
 

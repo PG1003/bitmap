@@ -15,7 +15,7 @@ A pure Lua module to open, create, modify and save bitmap images.
   * Generating diffs from bitmaps.
 * Creating heatmaps.
 * Additional color module providing the following features;
-  * colorspace conversions back and forth between RGB and the HSV, HSL and Lab colorspaces.
+  * colorspace conversions back and forth between RGB and the HSV, HSL, Lab and HCL colorspaces.
   * color comparison with Delta E76 and Delta E94.
   * color quantization using median cut in the RGB colorspace.
 
