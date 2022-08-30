@@ -81,6 +81,26 @@ function tests.Lab_to_color()
     _to_color( color.from_Lab, _rgb_Lab )
 end
 
+local _rgb_hcl =
+{
+    [ 0xFFFF0000 ] = { 0.11111154974018, 104.57551843994,   53.232881785842 },
+    [ 0xFF00FF00 ] = { 0.37782210028289, 119.77853621173,   87.737033473544 },
+    [ 0xFF0000FF ] = { 0.85079778212313, 133.81586201619,   32.302586667249 },
+    [ 0xFF00FFFF ] = { 0.54551755419464,  50.115230901099,  91.116521109463 },
+    [ 0xFFFF00FF ] = { 0.91175703931589, 115.56712429966 ,  60.319933664076 },
+    [ 0xFFFFFF00 ] = { 0.28569971169235,  96.910253535306,  97.138246981297 },
+    [ 0xFF000000 ] = { 0.00000000000000,   0.000000000000,  0.0000000000000 },
+    [ 0xFFFFFFFF ] = { 1.00000000000000,   0.000000000000, 100.000000000000 }
+}
+
+function test.color_to_hcl()
+    _from_color( color.to_hcl, _rgb_hcl )
+end
+
+function tests.hcl_to_color()
+    _to_color( color.from_hcl, _rgb_hcl )
+end
+
 function tests.quantize_palette_16_to_42()
     local colors = color.quantize( palettes.palette_16, 42 )
     test.is_same( #colors, 16 )  -- the reference bitmap has only 16 colors

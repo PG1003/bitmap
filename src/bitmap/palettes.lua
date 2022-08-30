@@ -129,6 +129,7 @@ local _gradient_methods =
     RGB = { color.to_rgba, color.from_rgba, _linear_diff, _linear_diff, _linear_diff, _linear_transform, _linear_transform, _linear_transform },
     HSL = { color.to_hsl,  color.from_hsl,  _hue_diff,    _linear_diff, _linear_diff, _hue_transform,    _linear_transform, _linear_transform },
     HSV = { color.to_hsv,  color.from_hsv,  _hue_diff,    _linear_diff, _linear_diff, _hue_transform,    _linear_transform, _linear_transform },
+    HCL = { color.to_hcl,  color.from_hcl,  _linear_diff, _linear_diff, _hue_diff,    _linear_transform, _linear_transform,    _hue_transform },
     LAB = { color.to_Lab,  color.from_Lab,  _linear_diff, _linear_diff, _linear_diff, _linear_transform, _linear_transform, _linear_transform }
 }
 

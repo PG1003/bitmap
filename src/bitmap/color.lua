@@ -307,6 +307,24 @@ local function _luminance( color )
     return ( 116.0 * y ) - 16.0
 end
 
+local function _to_hcl( color )
+    local l, a, b = _to_Lab( color )
+    local c       = math_sqrt( a * a + b * b )
+    local h       = math_atan( b, a ) / ( 2.0 * math_pi )
+
+    h = h >= 0.0 and h or h + 1.0
+
+    return h, c, l
+end
+
+local function _from_hcl( h, c, l )
+    local h_rad = h * 2.0 * math_pi
+    local a     = math_cos( h_rad ) * c
+    local b     = math_sin( h_rad ) * c
+
+    return _from_Lab( l, a, b )
+end
+
 --
 -- Color comparison functions
 --
@@ -599,6 +617,8 @@ local color =
     from_hsl    = _from_hsl,
     to_Lab      = _to_Lab,
     from_Lab    = _from_Lab,
+    to_hcl      = _to_hcl,
+    from_hcl    = _from_hcl,
     luminance   = _luminance,
     delta_e76   = _delta_e76,
     delta_e94   = _delta_e94,
