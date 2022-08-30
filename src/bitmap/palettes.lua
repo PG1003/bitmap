@@ -112,7 +112,13 @@ end
 
 local function _hue_diff( l, r )
     local diff = r - l
-    return math.abs( diff ) <= 0.5 and diff or -1.0 + diff
+    if diff < -0.5 then
+        return diff + 1.0
+    elseif diff > 0.5 then
+        return diff - 1.0
+    else
+        return diff
+    end
 end
 
 local function _linear_transform( from, step_size, step )
@@ -129,7 +135,7 @@ local _gradient_methods =
     RGB = { color.to_rgba, color.from_rgba, _linear_diff, _linear_diff, _linear_diff, _linear_transform, _linear_transform, _linear_transform },
     HSL = { color.to_hsl,  color.from_hsl,  _hue_diff,    _linear_diff, _linear_diff, _hue_transform,    _linear_transform, _linear_transform },
     HSV = { color.to_hsv,  color.from_hsv,  _hue_diff,    _linear_diff, _linear_diff, _hue_transform,    _linear_transform, _linear_transform },
-    HCL = { color.to_hcl,  color.from_hcl,  _linear_diff, _linear_diff, _hue_diff,    _linear_transform, _linear_transform,    _hue_transform },
+    HCL = { color.to_hcl,  color.from_hcl,  _hue_diff,    _linear_diff, _linear_diff, _hue_transform,    _linear_transform, _linear_transform },
     LAB = { color.to_Lab,  color.from_Lab,  _linear_diff, _linear_diff, _linear_diff, _linear_transform, _linear_transform, _linear_transform }
 }
 
@@ -166,7 +172,7 @@ local function _add_gradient( palette, from_color, to_color, count, method )
     local p_step_size = p_diff( from_p, to_p ) / count
     local q_step_size = q_diff( from_q, to_q ) / count
     local r_step_size = r_diff( from_r, to_r ) / count
-    
+
     for step = 1, count - 1 do
         local p                 = p_transform( from_p, p_step_size, step )
         local q                 = q_transform( from_q, q_step_size, step )
