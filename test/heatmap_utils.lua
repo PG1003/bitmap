@@ -158,7 +158,7 @@ local function _bitmap_view()
 end
 
 local function _heatmap_view_file_roundtrip()
-    local reference_file   = test.get_resource_file( "heatmap.bmp" )    
+    local reference_file   = test.get_resource_file( "heatmap.bmp" )
     local reference_bitmap = bitmap.open( reference_file )
     
     local pal = {}

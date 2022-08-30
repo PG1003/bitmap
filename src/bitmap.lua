@@ -801,7 +801,7 @@ local function _dither_bw( bmp )
                 diffuse_1[ x_next ] = L
             end
         end
-    end    
+    end
 end
 
 local function _dither( bmp, format, palette )
