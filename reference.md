@@ -377,7 +377,7 @@ Appends a gradient from `from_color` to `to_color` with `count` number of colors
 If `from_color` is a false-like type (`nil` or `false`) then the value of `palette[ #palette ]` will be used to interpolate from but is not added (again) to `palette`.
 `count` must be less then 65536 and at least be 2 when `from_color` is provided or 1 when `from_color` is a false-like type.  
 The optional `method` argument is a string that defines colorspace in which the linear interpolation between `from_color` and `to_color` is calculated.
-Valid values are `"RGB"`, `"HSL"`, `"HSV"` and `"LAB"`.
+Valid values are `"RGB"`, `"HSL"`, `"HSV"`, `"LAB"` and `"HCL"`.
 The RGB colorspace is default method.
 
 ### `palette_2`

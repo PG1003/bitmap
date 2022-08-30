@@ -139,8 +139,8 @@ local function _add_gradient( palette, from_color, to_color, count, method )
     assert( math.type( to_color ) == "integer" )
     assert( from_color ~= to_color )
     assert( math.type( count ) == "integer" and count < 0x10000 )
-    
-    local conversion     = assert( _gradient_methods[ string.upper( method or "RGB" ) ] )
+
+    local conversion     = method and assert( _gradient_methods[ string.upper( method ) ] ) or _gradient_methods.RGB
     local color_to_pqr   = conversion[ 1 ]
     local color_from_pqr = conversion[ 2 ]
     local p_diff         = conversion[ 3 ]
@@ -149,7 +149,7 @@ local function _add_gradient( palette, from_color, to_color, count, method )
     local p_transform    = conversion[ 6 ]
     local q_transform    = conversion[ 7 ]
     local r_transform    = conversion[ 8 ]
-    
+
     if from_color then
         assert( count > 1 )
         palette[ #palette + 1 ] = from_color
