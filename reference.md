@@ -31,7 +31,7 @@
 [from_hsv](#from_hsv-h-s-v--a--255-)  
 [from_Lab](#from_lab-l-a-b-)  
 [from_rgba](#from_rgba-r-g-b--a--255-)  
-[lerp](#lerp-c1-c2-t--colorspace--rgb-)  
+[lerp](#lerp-color_1-color_2-t--colorspace--rgb-)  
 [luminance](#luminance-color-)  
 [quantize](#quantize-colors-n_colors-)  
 [red](#red-color-)  
