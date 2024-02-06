@@ -106,55 +106,11 @@ local function _add_color( palette, color, count )
     end
 end
 
-local function _linear_diff( l, r )
-    return r - l
-end
-
-local function _hue_diff( l, r )
-    local diff = r - l
-    if diff < -0.5 then
-        return diff + 1.0
-    elseif diff > 0.5 then
-        return diff - 1.0
-    else
-        return diff
-    end
-end
-
-local function _linear_transform( from, step_size, step )
-    return from + step_size * step
-end
-
-local function _hue_transform( from, step_size, step )
-    local value = from + step_size * step
-    return value >= 0.0 and value or 1.0 + value
-end
-
-local _gradient_methods =
-{
-    RGB = { color.to_rgba, color.from_rgba, _linear_diff, _linear_diff, _linear_diff, _linear_transform, _linear_transform, _linear_transform },
-    HSL = { color.to_hsl,  color.from_hsl,  _hue_diff,    _linear_diff, _linear_diff, _hue_transform,    _linear_transform, _linear_transform },
-    HSV = { color.to_hsv,  color.from_hsv,  _hue_diff,    _linear_diff, _linear_diff, _hue_transform,    _linear_transform, _linear_transform },
-    HCL = { color.to_hcl,  color.from_hcl,  _hue_diff,    _linear_diff, _linear_diff, _hue_transform,    _linear_transform, _linear_transform },
-    LAB = { color.to_Lab,  color.from_Lab,  _linear_diff, _linear_diff, _linear_diff, _linear_transform, _linear_transform, _linear_transform }
-}
-
-local function _add_gradient( palette, from_color, to_color, count, method )
+local function _add_gradient( palette, from_color, to_color, count, colorspace )
     assert( type( palette ) == "table" )
     assert( not from_color or math.type( from_color ) == "integer" )
-    assert( math.type( to_color ) == "integer" )
     assert( from_color ~= to_color )
-    assert( math.type( count ) == "integer" and count < 0x10000 )
-
-    local conversion     = method and assert( _gradient_methods[ string.upper( method ) ] ) or _gradient_methods.RGB
-    local color_to_pqr   = conversion[ 1 ]
-    local color_from_pqr = conversion[ 2 ]
-    local p_diff         = conversion[ 3 ]
-    local q_diff         = conversion[ 4 ]
-    local r_diff         = conversion[ 5 ]
-    local p_transform    = conversion[ 6 ]
-    local q_transform    = conversion[ 7 ]
-    local r_transform    = conversion[ 8 ]
+    assert( math.type( count ) == "integer" and count > 0 and count <= 0x10000 )
 
     if from_color then
         assert( count > 1 )
@@ -165,32 +121,49 @@ local function _add_gradient( palette, from_color, to_color, count, method )
         from_color = palette[ #palette ];
         assert( math.type( from_color ) == "integer" )
     end
-    
-    local from_p, from_q, from_r = color_to_pqr( from_color )
-    local to_p,   to_q,   to_r   = color_to_pqr( to_color )
-    
-    local p_step_size = p_diff( from_p, to_p ) / count
-    local q_step_size = q_diff( from_q, to_q ) / count
-    local r_step_size = r_diff( from_r, to_r ) / count
 
-    for step = 1, count - 1 do
-        local p                 = p_transform( from_p, p_step_size, step )
-        local q                 = q_transform( from_q, q_step_size, step )
-        local r                 = r_transform( from_r, r_step_size, step )
-        palette[ #palette + 1 ] = color_from_pqr( p, q, r )
+    if count > 1 then
+        local step  = 1.0 / count
+        for n = 1, count -1 do
+            assert( from_color )
+            assert( to_color )
+            palette[ #palette + 1 ] = color.lerp( from_color, to_color, n * step, colorspace )
+        end
     end
 
     -- Insert final color outside the loop to finish with to_color without any rounding errors
     palette[ #palette + 1 ] = to_color
 end
 
+local function _unique_colors( palette )
+    assert( type( palette ) == "table" )
+
+    local unique = {}
+
+    for _, c in ipairs( palette ) do
+        local is_unique = true
+        for __, u in ipairs( unique ) do
+            if c == u then
+                is_unique = false
+                break
+            end
+        end
+        if is_unique then
+            unique[ #unique + 1 ] = c
+        end
+    end
+
+    return unique
+end
+
 local palette =
 {
-    palette_2    = _make_read_only( _palette_2 ),
-    palette_16   = _make_read_only( _palette_16 ),
-    palette_256  = _make_read_only( _palette_256 ),
-    add_color    = _add_color,
-    add_gradient = _add_gradient
+    palette_2     = _make_read_only( _palette_2 ),
+    palette_16    = _make_read_only( _palette_16 ),
+    palette_256   = _make_read_only( _palette_256 ),
+    add_color     = _add_color,
+    add_gradient  = _add_gradient,
+    unique_colors = _unique_colors
 }
 
 return palette

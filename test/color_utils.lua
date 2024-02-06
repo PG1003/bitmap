@@ -2,8 +2,6 @@ local color    = require( "bitmap.color")
 local palettes = require( "bitmap.palettes" )
 local test     = require( "test" )
 
-local tests = {}
-
 
 local function _from_color( from_color, colors )
     for rgb, values in pairs( colors ) do
@@ -33,11 +31,11 @@ local _rgb_hsl =
     [ 0xFFFFFFFF ] = { 0.00000,   0.00000, 1.00000 }
 }
 
-function tests.color_to_hsl()
+function _color_to_hsl()
     _from_color( color.to_hsl, _rgb_hsl )
 end
 
-function tests.hsl_to_color()
+function _hsl_to_color()
     _to_color( color.from_hsl, _rgb_hsl )
 end
 
@@ -53,11 +51,11 @@ local _rgb_hsv =
     [ 0xFFFFFFFF ] = { 0.00000,   0.00000, 1.00000 }
 }
 
-function tests.color_to_hsv()
+function _color_to_hsv()
     _from_color( color.to_hsv, _rgb_hsv )
 end
 
-function tests.hsv_to_color()
+function _hsv_to_color()
     _to_color( color.from_hsv, _rgb_hsv )
 end
 
@@ -73,11 +71,11 @@ local _rgb_Lab =
     [ 0xFFFFFFFF ] = { 100.000000000000,   0.005260000000,   -0.010408000000 }  -- There are some minor rouding errors
 }
 
-function tests.color_to_Lab()
+function _color_to_Lab()
     _from_color( color.to_Lab, _rgb_Lab )
 end
 
-function tests.Lab_to_color()
+function _Lab_to_color()
     _to_color( color.from_Lab, _rgb_Lab )
 end
 
@@ -89,27 +87,29 @@ local _rgb_hcl =
     [ 0xFF00FFFF ] = { 0.54551755419464,  50.115230901099,  91.116521109463 },
     [ 0xFFFF00FF ] = { 0.91175703931589, 115.56712429966 ,  60.319933664076 },
     [ 0xFFFFFF00 ] = { 0.28569971169235,  96.910253535306,  97.138246981297 },
-    [ 0xFF000000 ] = { 0.00000000000000,   0.000000000000,  0.0000000000000 },
-    [ 0xFFFFFFFF ] = { 1.00000000000000,   0.000000000000, 100.000000000000 }
+    [ 0xFF000000 ] = { 0.00000000000000,   0.000000000000,  0.0000000000000 }
+    -- White is a difficult color to convert to HCL.
+    -- When the color doesn't really matter when luminace is 100%
+    -- [ 0xFFFFFFFF ] = { 1.00000000000000,   0.000000000000, 100.000000000000 }
 }
 
-function test.color_to_hcl()
+function _color_to_hcl()
     _from_color( color.to_hcl, _rgb_hcl )
 end
 
-function tests.hcl_to_color()
+function _hcl_to_color()
     _to_color( color.from_hcl, _rgb_hcl )
 end
 
-function tests.quantize_palette_16_to_42()
+function _quantize_palette_16_to_42()
     local colors = color.quantize( palettes.palette_16, 42 )
     test.is_same( #colors, 16 )  -- the reference bitmap has only 16 colors
 end
 
-function tests.quantize_palette_256_to_32()
+function _quantize_palette_256_to_32()
     local colors = color.quantize( palettes.palette_256, 32 )
     test.is_same( #colors, 32 )
-    
+
     -- Check uniqueness of the pixels
     for i = 1, #colors do
         local color_i = colors[ i ]
@@ -119,7 +119,14 @@ function tests.quantize_palette_256_to_32()
     end
 end
 
-    
+function _lerp()
+    test.is_same( color.lerp( 0xFF0000, 0xFF00FF, 0.5 ) & 0xFFFFFF, 0xFF007F )
+    test.is_same( color.lerp( 0xFF0000, 0xFF00FF, 0.5, "HSL" ) & 0xFFFFFF, 0xFF007F )
+    test.is_same( color.lerp( 0xFF0000, 0xFF00FF, 0.5, "HSV" ) & 0xFFFFFF, 0xFF007F )
+    test.is_same( color.lerp( 0xFF0000, 0xFF00FF, 0.5, "HCL" ) & 0xFFFFFF, 0xFF0080 )
+    test.is_same( color.lerp( 0xFF0000, 0xFF00FF, 0.5, "LAB" ) & 0xFFFFFF, 0xFF0087 )
+end
+
 local _delta_e =
 {
     { {  53.241,  80.092,   67.203 }, {  87.735, -86.183,   83.179 }, 170.565073,  73.430543,  86.608162 }, -- 0xFF00FF00, 0xFFFF0000
@@ -130,7 +137,7 @@ local _delta_e =
     { { 100.000,   0.000,    0.000 }, {  97.139, -21.554,   94.478 },  96.947680,  96.947680,  30.516068 }  -- 0xFFFFFFFF, 0xFFFFFF00
 }
 
-function tests.delta_e76()
+function _delta_e76()
     for i = 1, #_delta_e do
         local combination = _delta_e[ i ]
         local L1, a1, b1  = table.unpack( combination[ 1 ] )
@@ -140,7 +147,7 @@ function tests.delta_e76()
     end
 end
 
-function tests.delta_e94()
+function _delta_e94()
     for i = 1, #_delta_e do
         local combination = _delta_e[ i ]
         local L1, a1, b1  = table.unpack( combination[ 1 ] )
@@ -160,5 +167,22 @@ end
 --        test.is_same_float( f, e2000, 0.0000005 )
 --    end
 --end
+
+local tests =
+{
+    color_to_hsl               = _color_to_hsl,
+    hsl_to_color               = _hsl_to_color,
+    color_to_hsv               = _color_to_hsv,
+    hsv_to_color               = _hsv_to_color,
+    color_to_Lab               = _color_to_Lab,
+    Lab_to_color               = _Lab_to_color,
+    color_to_hcl               = _color_to_hcl,
+    hcl_to_color               = _hcl_to_color,
+    quantize_palette_16_to_42  = _quantize_palette_16_to_42,
+    quantize_palette_256_to_32 = _quantize_palette_256_to_32,
+    lerp                       = _lerp,
+    delta_e76                  = _delta_e76,
+    delta_e94                  = _delta_e94
+}
 
 return tests

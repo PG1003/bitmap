@@ -81,20 +81,20 @@ local function _create( width, height, init )
     assert( math.type( width ) == "integer" and width > 0 )
     assert( math.type( height ) == "integer" and height > 0 )
     init = type( init ) == "number" and init or 0
-    
+
     local hm = {}
     
     local row = {}
     for x = 1, width do
         row[ x ] = init
     end
-    
+
     hm[ 1 ] = setmetatable( row, _mask_new_values_mt )
     
     for y = 2, height do
         hm[ y ] = setmetatable( table.move( row, 1, width, 1, {} ), _mask_new_values_mt )
     end
-    
+
     return setmetatable( hm, _heatmap_mt )
 end
 
@@ -118,14 +118,14 @@ local _bitmap_view_mt =
 local function _make_bitmap_view( hm, cell_size_x, cell_size_y, hm_palette )
     assert( math.type( cell_size_x ) == "integer" and cell_size_x > 0 )
     assert( math.type( cell_size_y ) == "integer" and cell_size_y > 0 )
-    
+
     local hm_x_mapping = {}
     for x = 1, hm:width() do
         for _ = 1, cell_size_x do
             hm_x_mapping[ #hm_x_mapping + 1 ] = x
         end
     end
-    
+
     local len_x = function( self ) return #hm_x_mapping end
     
     local view = {}
@@ -150,13 +150,13 @@ end
 
 local function _make_heatmap_palette( min, max, palette, out_of_range_color )
     out_of_range_color = out_of_range_color or 0xFF000000
-    
+
     assert( type( min ) == "number", "number expected" )
     assert( type( max ) == "number", "number expected" )
     assert( min < max, "min is larger or equal to max" )
     assert( type( palette ) == "table" and #palette > 0 )
     assert( math.type( out_of_range_color ) == "integer" )
-    
+
     local range       = max - min
     local bucket_size = range / ( #palette - 1 )
     

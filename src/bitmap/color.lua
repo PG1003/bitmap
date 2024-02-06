@@ -601,6 +601,98 @@ local function _quantize( colors, n_colors )
     return palette
 end
 
+local function _hue_lerp( h1, h2, t )
+    local diff = h2 - h1
+    if diff < -0.5 then
+        diff = diff + 1.0
+    elseif diff > 0.5 then
+        diff =  diff - 1.0
+    end
+
+    local value = h1 + diff * t
+    if value < 0.0 then
+        return value + 1.0
+    elseif value > 1.0 then
+        return value - 1.0
+    else
+        return value
+    end
+end
+
+local function _lerp_rgb( c1, c2, t )
+    local from_r, from_g, from_b = _to_rgba( c1 )
+    local to_r,   to_g,   to_b   = _to_rgba( c2 )
+
+    local lerp_r = from_r + ( to_r - from_r ) * t
+    local lerp_g = from_g + ( to_g - from_g ) * t
+    local lerp_b = from_b + ( to_b - from_b ) * t
+
+    return _from_rgba( lerp_r, lerp_g, lerp_b )
+end
+
+local function _lerp_hsl( c1, c2, t )
+    local from_h, from_s, from_l = _to_hsl( c1 )
+    local to_h,   to_s,   to_l   = _to_hsl( c2 )
+
+    local lerp_h = _hue_lerp( from_h, to_h, t )
+    local lerp_s = from_s + ( to_s - from_s ) * t
+    local lerp_l = from_l + ( to_l - from_l ) * t
+
+    return _from_hsl( lerp_h, lerp_s, lerp_l )
+end
+
+local function _lerp_hsv( c1, c2, t )
+    local from_h, from_s, from_v = _to_hsv( c1 )
+    local to_h,   to_s,   to_v   = _to_hsv( c2 )
+
+    local lerp_h = _hue_lerp( from_h, to_h, t )
+    local lerp_s = from_s + ( to_s - from_s ) * t
+    local lerp_v = from_v + ( to_v - from_v ) * t
+
+    return _from_hsv( lerp_h, lerp_s, lerp_v )
+end
+
+local function _lerp_hcl( c1, c2, t )
+    local from_h, from_c, from_l = _to_hcl( c1 )
+    local to_h,   to_c,   to_l   = _to_hcl( c2 )
+
+    local lerp_h = _hue_lerp( from_h, to_h, t )
+    local lerp_c = from_c + ( to_c - from_c ) * t
+    local lerp_l = from_l + ( to_l - from_l ) * t
+
+    return _from_hcl( lerp_h, lerp_c, lerp_l )
+end
+
+local function _lerp_Lab( c1, c2, t )
+    local from_L, from_a, from_b = _to_Lab( c1 )
+    local to_L,   to_a,   to_b   = _to_Lab( c2 )
+
+    local lerp_L = from_L + ( to_L - from_L ) * t
+    local lerp_a = from_a + ( to_a - from_a ) * t
+    local lerp_b = from_b + ( to_b - from_b ) * t
+
+    return _from_Lab( lerp_L, lerp_a, lerp_b )
+end
+
+local _gradient_colorspaces =
+{
+    RGB = _lerp_rgb,
+    HSL = _lerp_hsl,
+    HSV = _lerp_hsv,
+    HCL = _lerp_hcl,
+    LAB = _lerp_Lab
+}
+
+local function _lerp( c1, c2, t, colorspace )
+    assert( math.type( c1 ) == "integer" )
+    assert( math.type( c2 ) == "integer" )
+    assert( type( t ) == "number" )
+
+    local lerp = colorspace and assert( _gradient_colorspaces[ string.upper( colorspace ) ] )
+
+    return lerp and lerp( c1, c2, t ) or _lerp_rgb( c1, c2, t )
+end
+
 local color =
 {
     red         = _red,
@@ -623,7 +715,8 @@ local color =
     delta_e76   = _delta_e76,
     delta_e94   = _delta_e94,
 --    delta_e2000 = _delta_e2000,
-    quantize    = _quantize
+    quantize    = _quantize,
+    lerp        = _lerp
 }
 
 return color

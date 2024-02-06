@@ -31,6 +31,7 @@
 [from_hsv](#from_hsv-h-s-v--a--255-)  
 [from_Lab](#from_lab-l-a-b-)  
 [from_rgba](#from_rgba-r-g-b--a--255-)  
+[lerp](#lerp-c1-c2-t--colorspace--rgb-)  
 [luminance](#luminance-color-)  
 [quantize](#quantize-colors-n_colors-)  
 [red](#red-color-)  
@@ -59,10 +60,11 @@
 ### bitmap.palettes
 
 [add_color](#add_color-palette-color--count--1-)  
-[add_gradient](#add_gradient-palette-from_color-to_color-count--method--rgb-)  
+[add_gradient](#add_gradient-palette-from_color-to_color-count--colorspace--rgb-)  
 [palette_2](#palette_2)  
 [palette_16](#palette_16)  
-[palette_256](#palette_256)
+[palette_256](#palette_256)  
+[unique_colors](#unique_colors-palette-)
 
 ## bitmap
 
@@ -249,6 +251,15 @@ Returns a color that is converted from the CIE Lab colorspace values.
 Returns a color that is converted from the RGB color component values.
 When the optional alpha is not provided the default value of 255 will be used.
 
+### `lerp( color_1, color_2, t [, colorspace = RGB] )`
+
+Returns an interpolated color between `color_1` and `color_2` using factor `t` where `t = 0` returns `color_1` while `t = 1` returns `color_2`.
+The colorspace is the colorspace in which the interpolation takes place.
+
+The optional `colorspace` argument is a string that defines colorspace in which the linear interpolation is calculated.
+Valid values are `"RGB"`, `"HSL"`, `"HSV"`, `"LAB"` and `"HCL"`.
+The default is colorspace is RGB.
+
 ### `luminance( color )`
 
 Returns the _L_ component of the Lab color spaces which is the luminance of the color.
@@ -371,14 +382,15 @@ Appends a `count` number of `color` values to `palette`.
 `count` must be at least 1 and less then 65536.
 When `count` is ommited a default of 1 is used.
 
-### `add_gradient( palette, from_color, to_color, count [, method = "RGB"] )`
+### `add_gradient( palette, from_color, to_color, count [, colorspace = "RGB"] )`
 
 Appends a gradient from `from_color` to `to_color` with `count` number of colors to `palette`.
 If `from_color` is a false-like type (`nil` or `false`) then the value of `palette[ #palette ]` will be used to interpolate from but is not added (again) to `palette`.
-`count` must be less then 65536 and at least be 2 when `from_color` is provided or 1 when `from_color` is a false-like type.  
-The optional `method` argument is a string that defines colorspace in which the linear interpolation between `from_color` and `to_color` is calculated.
+`count` must be equal or less then 65536 and at least be 2 when `from_color` is provided or 1 when `from_color` is a false-like type.  
+
+The optional `colorspace` parameter is the colorspace used by the linear interpolation between `from_color` and `to_color`.
 Valid values are `"RGB"`, `"HSL"`, `"HSV"`, `"LAB"` and `"HCL"`.
-The RGB colorspace is default method.
+The default is colorspace is RGB.
 
 ### `palette_2`
 
@@ -391,3 +403,9 @@ A read-only palette with 16 default colors derived from 4 bit bitmap image saved
 ### `palette_256`
 
 A read-only palette with 256 default colors derived from 8 bit bitmap image saved by MS Paint.
+
+### `unique_colors( palette )`
+
+Returns a new palette with all the unique colors from `palette`.
+The function itterates over `palette` from index `1` until `#palette`.
+The first occurence of a color is added to the new palette.
